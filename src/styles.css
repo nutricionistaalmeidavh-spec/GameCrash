@@ -59,3 +59,28 @@ button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}butto
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
 @media(max-width:380px){.controls-float{gap:5px}.drive-btn{width:49px;height:55px}.brake-btn{width:64px;font-size:11px}.accel-btn{width:80px;font-size:10px}}
+
+/* Turbo limiter and long course, including iPhone Safari safe areas. */
+.speed-setting{display:flex;flex-direction:column;gap:6px;width:min(100%,780px);margin-top:14px;pointer-events:auto}
+.speed-setting label{display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:800;letter-spacing:.08em;color:#c3d1d8}
+.speed-setting output{color:#d5ff42;font-family:Impact,Arial,sans-serif;font-size:18px;letter-spacing:.04em}
+.speed-setting input{appearance:none;-webkit-appearance:none;width:100%;height:16px;background:transparent;cursor:pointer;touch-action:pan-x}
+.speed-setting input::-webkit-slider-runnable-track{height:5px;background:#50606c;border-radius:8px}
+.speed-setting input::-moz-range-track{height:5px;background:#50606c;border-radius:8px}
+.speed-setting input::-webkit-slider-thumb{-webkit-appearance:none;width:21px;height:21px;margin-top:-8px;border-radius:50%;background:#d5ff42;border:3px solid #111f27}
+.speed-setting input::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:#d5ff42;border:3px solid #111f27}
+.result-metrics:has(#result-bumps:not(.hidden)){flex-wrap:wrap}
+#result-bumps{flex-basis:100%}
+.controls-float{bottom:340px}
+@media(max-width:1050px){.controls-float{bottom:350px}}
+@media(max-width:700px){
+  .scenarios{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .scenarios .pick{width:100%}
+  .speed-setting{gap:2px;margin-top:8px}
+  .speed-setting label{font-size:8px}
+  .speed-setting output{font-size:15px}
+  .hud-stats{gap:12px}
+  .hud-stats b{font-size:17px}
+  .controls-float{bottom:calc(323px + env(safe-area-inset-bottom))}
+  .bottom-panel{max-height:52dvh;overflow-y:auto;pointer-events:auto}
+}
