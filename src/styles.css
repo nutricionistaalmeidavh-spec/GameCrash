@@ -80,3 +80,9 @@ button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}butto
   .controls-float{bottom:calc(362px + env(safe-area-inset-bottom))}
 }
 @media(max-height:750px) and (max-width:700px){#vehicles{max-height:76px}.sceneries .pick{min-height:25px}.controls-float{bottom:calc(308px + env(safe-area-inset-bottom))}}
+
+/* Keep the newer main-branch hold-to-accelerate control available on all screens. */
+.accel-btn{font:900 12px Arial,sans-serif;width:93px;background:#c9f939;color:#15200a;border-color:#deff70;box-shadow:0 5px 20px #befe2730}
+.accel-btn.pressed{background:#f1ffae;color:#15200a;box-shadow:0 0 0 3px #d5ff4290,0 0 23px #d5ff4270}
+@media(max-width:700px){.controls-float{gap:6px}.drive-btn{width:57px}.brake-btn{width:70px}.accel-btn{width:90px;font-size:11px}}
+@media(max-width:380px){.controls-float{gap:5px}.drive-btn{width:49px;height:55px}.brake-btn{width:64px;font-size:11px}.accel-btn{width:80px;font-size:10px}}
