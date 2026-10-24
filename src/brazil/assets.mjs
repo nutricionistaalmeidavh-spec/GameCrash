@@ -25,7 +25,10 @@ export async function createBrazilContent({ baseUrl, loader = new GLTFLoader() }
   async function load(group, id) {
     const metadata = manifest[group]?.[id];
     if (!metadata) throw new Error(`GameCrash Brazil: ${group}/${id} não existe`);
-    const uri = new URL(metadata.filename, root).href;
+    const path = metadata.file ?? metadata.filename;
+    if (typeof path !== 'string') throw new Error('Arquivo GLB ausente do catálogo');
+    // Catalog paths are relative to Vite public/, not the manifest directory.
+    const uri = new URL(path.replace(/^assets\/brazil\//, ''), root).href;
     const gltf = await loader.loadAsync(uri);
     const object = gltf.scene;
     object.name = id;
