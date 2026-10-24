@@ -61,7 +61,8 @@ jobs:
         with:
           name: gamecrash-dist
           path: dist
-      - name: Ensure Pages deploys Actions artifacts, not raw source
+      - name: Attempt to switch Pages source to Actions (requires admin permission)
+        continue-on-error: true # Legacy branch source may require a one-time manual Pages setting
         env:
           GITHUB_TOKEN: ${{ github.token }}
         run: node scripts/pages-source.mjs
