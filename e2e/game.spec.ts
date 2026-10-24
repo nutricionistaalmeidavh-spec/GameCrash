@@ -12,10 +12,10 @@ test('abre a cena 3D, troca carro e cenário e dirige', async ({page}, testInfo)
   await expect(page.locator('#vehicles button').nth(2)).toHaveAttribute('aria-pressed','true');
   await page.locator('#scenarios button').nth(1).click();
   await expect(page.locator('#scenarios button').nth(1)).toHaveAttribute('aria-pressed','true');
+  await page.locator('#camera').click();
   await page.locator('#start').click();
   await expect(page.locator('body')).toHaveClass(/running/);
-  await expect.poll(async()=>Number(await page.locator('#speed').textContent()), {timeout:20_000}).toBeGreaterThan(5);
-  await page.locator('#camera').click();
+  await expect.poll(async()=>Number((await page.locator('#distance').textContent())?.match(/\d+/)?.[0] ?? 0), {timeout:20_000}).toBeGreaterThan(5);
   await expect(page.locator('#fatal')).toBeHidden();
   await testInfo.attach('game-running', {body:await page.screenshot(),contentType:'image/png'});
   expect(failures).toEqual([]);
