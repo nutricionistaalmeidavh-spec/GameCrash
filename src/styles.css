@@ -21,6 +21,8 @@ button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}butto
 .controls-float{position:absolute;right:4%;bottom:300px;display:flex;align-items:center;gap:11px;opacity:0;transition:opacity .2s;pointer-events:none}body[data-phase='running'] .controls-float{opacity:1;pointer-events:auto}
 .drive-btn{height:65px;width:65px;border-radius:16px;background:#111e25d9;color:white;border:1px solid #ffffff55;font-family:Impact,sans-serif;font-size:35px;font-weight:700;backdrop-filter:blur(12px);touch-action:none;user-select:none}
 .drive-btn.pressed{background:#d5ff42;color:#101b19;transform:scale(.96)}.brake-btn{font:900 14px Arial,sans-serif;width:77px;background:#e74636;color:white;border-color:#f56e61}
+.accel-btn{font:900 12px Arial,sans-serif;width:93px;background:#c9f939;color:#15200a;border-color:#deff70;box-shadow:0 5px 20px #befe2730}
+.accel-btn.pressed{background:#f1ffae;color:#15200a;box-shadow:0 0 0 3px #d5ff4290,0 0 23px #d5ff4270}
 .bottom-panel{position:absolute;bottom:0;left:0;right:0;padding:20px 38px 23px;background:linear-gradient(180deg,rgba(9,13,18,.68),#0a1018ed 19%,#090e15 100%);border-top:1px solid #ffffff2c;box-shadow:0 -15px 45px #07101745}
 .section-label{color:#aab9c2;margin-bottom:10px}.selection-row{display:flex;gap:8px;width:100%;max-width:780px}
 .pick{position:relative;display:flex;align-items:center;text-align:left;border:1px solid #ffffff26;background:#1a252fa0;color:white;border-radius:9px;min-height:68px;padding:9px 11px;gap:12px;flex:1;min-width:0;transition:.18s}
@@ -50,12 +52,38 @@ button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}butto
 .bottom-panel{padding:11px 12px max(13px,env(safe-area-inset-bottom));}.section-label{font-size:8px;margin-bottom:7px}.selection-row{gap:5px}.pick{min-height:54px;padding:8px 7px;gap:5px;border-radius:7px}
 .car-icon{width:30px}.pick-text b{font-size:12px}.pick-text small{font-size:6px;white-space:normal}.radio-dot{height:7px;width:7px;right:5px;top:5px;border-width:1px}.selected .radio-dot{border-width:2px}
 .scenario-label{margin-top:9px}.scenario-glyph{font-size:20px;width:25px}.scenarios .pick{min-height:45px}.bottom-actions{margin-top:11px}.bottom-help{font-size:6px;letter-spacing:0}.primary-btn{min-width:152px;font-size:10px;gap:8px;padding:11px 10px 11px 15px}.primary-btn b{font-size:18px}
-.controls-float{right:10px;left:10px;bottom:calc(238px + env(safe-area-inset-bottom));justify-content:space-between}.drive-btn{height:58px;width:60px;border-radius:13px}.brake-btn{width:71px}
+.controls-float{right:10px;left:10px;bottom:calc(238px + env(safe-area-inset-bottom));justify-content:space-between}.drive-btn{height:58px;width:57px;border-radius:13px}.brake-btn{width:70px}.accel-btn{width:90px;font-size:11px}.controls-float{gap:6px}
 }
 @media(max-width:380px){.bottom-help{display:none}.bottom-actions{justify-content:flex-end}.pick-text b{font-size:11px}.car-icon{width:26px}}
 @media(max-height:730px) and (min-width:701px){.hud{top:112px}.speed-line strong{font-size:65px}.bottom-panel{padding-top:12px;padding-bottom:12px}.pick{min-height:56px}.scenario-label{margin-top:8px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
 
+@media(max-width:380px){.controls-float{gap:5px}.drive-btn{width:49px;height:55px}.brake-btn{width:64px;font-size:11px}.accel-btn{width:80px;font-size:10px}}
+
+/* Turbo limiter and long course, including iPhone Safari safe areas. */
+.speed-setting{display:flex;flex-direction:column;gap:6px;width:min(100%,780px);margin-top:14px;pointer-events:auto}
+.speed-setting label{display:flex;justify-content:space-between;align-items:center;font-size:10px;font-weight:800;letter-spacing:.08em;color:#c3d1d8}
+.speed-setting output{color:#d5ff42;font-family:Impact,Arial,sans-serif;font-size:18px;letter-spacing:.04em}
+.speed-setting input{appearance:none;-webkit-appearance:none;width:100%;height:16px;background:transparent;cursor:pointer;touch-action:pan-x}
+.speed-setting input::-webkit-slider-runnable-track{height:5px;background:#50606c;border-radius:8px}
+.speed-setting input::-moz-range-track{height:5px;background:#50606c;border-radius:8px}
+.speed-setting input::-webkit-slider-thumb{-webkit-appearance:none;width:21px;height:21px;margin-top:-8px;border-radius:50%;background:#d5ff42;border:3px solid #111f27}
+.speed-setting input::-moz-range-thumb{width:17px;height:17px;border-radius:50%;background:#d5ff42;border:3px solid #111f27}
+.result-metrics:has(#result-bumps:not(.hidden)){flex-wrap:wrap}
+#result-bumps{flex-basis:100%}
+.controls-float{bottom:340px}
+@media(max-width:1050px){.controls-float{bottom:350px}}
+@media(max-width:700px){
+  .scenarios{display:grid;grid-template-columns:repeat(2,minmax(0,1fr))}
+  .scenarios .pick{width:100%}
+  .speed-setting{gap:2px;margin-top:8px}
+  .speed-setting label{font-size:8px}
+  .speed-setting output{font-size:15px}
+  .hud-stats{gap:12px}
+  .hud-stats b{font-size:17px}
+  .controls-float{bottom:calc(323px + env(safe-area-inset-bottom))}
+  .bottom-panel{max-height:52dvh;overflow-y:auto;pointer-events:auto}
+}
 
 /* Brasil catalog: compact vertical grid, no horizontal carousel */
 #vehicles{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));max-width:none;max-height:134px;overflow-y:auto;overscroll-behavior:contain;padding-right:3px}
@@ -80,9 +108,4 @@ button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}butto
   .controls-float{bottom:calc(362px + env(safe-area-inset-bottom))}
 }
 @media(max-height:750px) and (max-width:700px){#vehicles{max-height:76px}.sceneries .pick{min-height:25px}.controls-float{bottom:calc(308px + env(safe-area-inset-bottom))}}
-
-/* Keep the newer main-branch hold-to-accelerate control available on all screens. */
-.accel-btn{font:900 12px Arial,sans-serif;width:93px;background:#c9f939;color:#15200a;border-color:#deff70;box-shadow:0 5px 20px #befe2730}
-.accel-btn.pressed{background:#f1ffae;color:#15200a;box-shadow:0 0 0 3px #d5ff4290,0 0 23px #d5ff4270}
-@media(max-width:700px){.controls-float{gap:6px}.drive-btn{width:57px}.brake-btn{width:70px}.accel-btn{width:90px;font-size:11px}}
-@media(max-width:380px){.controls-float{gap:5px}.drive-btn{width:49px;height:55px}.brake-btn{width:64px;font-size:11px}.accel-btn{width:80px;font-size:10px}}
+@media(max-width:700px){.controls-float{bottom:calc(52dvh + env(safe-area-inset-bottom) + 8px)}}

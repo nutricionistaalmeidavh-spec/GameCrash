@@ -1,7 +1,7 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import type {ScenarioId} from './rules';
-import {SCENARIOS} from './rules';
+import {SCENARIOS,SPEEDBUMPS} from './rules';
 
 const mat=(color:number,roughness=1,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
 function addBox(root:THREE.Group,size:[number,number,number],pos:[number,number,number],material:THREE.Material){
@@ -12,24 +12,27 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
   const root=new THREE.Group();scene.add(root);
   const obstacleHandles=new Set<number>();
   const grass=mat(0x566c4d),road=mat(0x333a42),shoulder=mat(0x667078),stripe=mat(0xd5dce0),yellow=mat(0xe5c468);
-  addBox(root,[520,.12,920],[0,-.1,245],grass).castShadow=false;
-  addBox(root,[25,.08,880],[0,.01,235],shoulder).castShadow=false;
-  addBox(root,[19,.085,880],[0,.03,235],road).castShadow=false;
+  const roadEnd=scenario==='speedbumps'?SPEEDBUMPS.finishZ+100:675;
+  const roadCenter=(roadEnd-65)/2;
+  const roadLength=roadEnd+65;
+  addBox(root,[520,.12,roadLength],[0,-.1,roadCenter],grass).castShadow=false;
+  addBox(root,[25,.08,roadLength],[0,.01,roadCenter],shoulder).castShadow=false;
+  addBox(root,[19,.085,roadLength],[0,.03,roadCenter],road).castShadow=false;
   for(const side of [-1,1]){
-    addBox(root,[.20,.035,860],[side*9,.095,235],stripe).castShadow=false;
-    addBox(root,[.14,.025,860],[side*6.1,.1,235],yellow).castShadow=false;
+    addBox(root,[.20,.035,roadLength-20],[side*9,.095,roadCenter],stripe).castShadow=false;
+    addBox(root,[.14,.025,roadLength-20],[side*6.1,.1,roadCenter],yellow).castShadow=false;
   }
-  for(let z=-30;z<650;z+=13)for(const x of [-3.05,3.05]) addBox(root,[.15,.025,6.1],[x,.10,z],stripe).castShadow=false;
-  world.createCollider(RAPIER.ColliderDesc.cuboid(260,.3,470).setFriction(1),world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,-.33,245)));
+  for(let z=-30;z<roadEnd;z+=13)for(const x of [-3.05,3.05]) addBox(root,[.15,.025,6.1],[x,.10,z],stripe).castShadow=false;
+  world.createCollider(RAPIER.ColliderDesc.cuboid(260,.3,roadLength/2).setFriction(1),world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,-.33,roadCenter)));
   const trunk=mat(0x604735),leaf=mat(0x2b5643),leafAlt=mat(0x3b6b49);
   const trunkGeo=new THREE.CylinderGeometry(.17,.26,2.5,5),canopyGeo=new THREE.ConeGeometry(2.2,6.2,6);
-  const trees=90;
+  const trees=scenario==='speedbumps'?202:90;
   const trunkBatch=new THREE.InstancedMesh(trunkGeo,trunk,trees);
   const leafBatch=new THREE.InstancedMesh(canopyGeo,leaf,trees);
   const leafBatch2=new THREE.InstancedMesh(canopyGeo,leafAlt,trees);
   const dummy=new THREE.Object3D();
   for(let i=0;i<trees;i++){
-    const z=-30+i*7.75;
+    const z=-30+i*(scenario==='speedbumps'?7.6:7.75);
     const side=i%2===0?1:-1;
     const spread=15+((i*19)%17);
     const x=side*spread;
@@ -73,6 +76,25 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
     obstacle(0,1.65,z,9,.85,15,paint,angle,false);
     for(let i=0;i<8;i++)addBox(root,[9,.05,2.5],[0,.11,z+25+i*3.5],i%2===0?concrete:road);
     obstacle(0,1.3,z+68,11,2.6,1.6,concrete);
+  }
+  if(scenario==='speedbumps'){
+    // Instancing shares two meshes for all 120 physical bumps, keeping WebKit draw calls low.
+    const bumpGeo=new THREE.BoxGeometry(18,.20,1.35);
+    const paintGeo=new THREE.BoxGeometry(18,.027,.45);
+    const bumps=new THREE.InstancedMesh(bumpGeo,block,SPEEDBUMPS.count);
+    const markings=new THREE.InstancedMesh(paintGeo,paint,SPEEDBUMPS.count);
+    const instance=new THREE.Object3D();
+    for(let i=0;i<SPEEDBUMPS.count;i++){
+      const zBump=SPEEDBUMPS.firstZ+i*SPEEDBUMPS.spacing;
+      instance.position.set(0,.20,zBump);instance.updateMatrix();
+      bumps.setMatrixAt(i,instance.matrix);
+      instance.position.set(0,.315,zBump);instance.updateMatrix();
+      markings.setMatrixAt(i,instance.matrix);
+      const body=world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,.20,zBump));
+      world.createCollider(RAPIER.ColliderDesc.cuboid(9,.10,.675).setFriction(.9).setRestitution(.03),body);
+    }
+    bumps.instanceMatrix.needsUpdate=true;markings.instanceMatrix.needsUpdate=true;
+    bumps.receiveShadow=true;root.add(bumps,markings);
   }
   for(const zpos of [70,140,185]){
     addBox(root,[.25,3.5,.25],[-13.8,1.75,zpos],concrete);

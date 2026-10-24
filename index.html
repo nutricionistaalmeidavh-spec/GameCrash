@@ -19,7 +19,7 @@
         </header>
         <section class="hud" aria-label="Telemetria">
           <div class="speed-block"><div class="eyebrow">VELOCIDADE ATUAL</div><div class="speed-line"><strong id="speed">000</strong><span>KM/H</span></div><div class="speed-track"><span id="speed-bar"></span></div></div>
-          <div class="hud-stats"><div><small>DISTÂNCIA</small><b id="distance">000 m</b></div><div><small>INTEGRIDADE</small><b id="integrity">100%</b></div></div>
+          <div class="hud-stats"><div><small>DISTÂNCIA</small><b id="distance">000 m</b></div><div><small>INTEGRIDADE</small><b id="integrity">100%</b></div><div id="bumps-stat" class="hidden"><small>LOMBADAS</small><b id="bumps-count">000/120</b></div></div>
         </section>
         <div class="stage-marker" id="stage-marker"><span class="stage-dot"></span> SELECIONE UM TESTE E COMECE</div>
         <aside class="hint" id="hint">W / ↑ acelerar &nbsp;·&nbsp; A D / ← → dirigir &nbsp;·&nbsp; S / espaço frear</aside>
@@ -31,9 +31,10 @@
           <div id="scenarios" class="selection-row scenarios" role="group" aria-label="Selecionar desafio"></div>
           <div class="section-label scenery-label">03 / CENÁRIO BRASILEIRO</div>
           <div id="sceneries" class="selection-row sceneries" role="group" aria-label="Selecionar paisagem"></div>
+          <div class="speed-setting"><label for="max-speed">LIMITE DO ACELERADOR <output id="max-speed-value" for="max-speed">600 KM/H</output></label><input id="max-speed" type="range" min="60" max="600" step="20" value="600" aria-label="Velocidade máxima" /></div>
           <div class="bottom-actions"><span class="bottom-help">SEM CADASTRO <i>•</i> GRÁTIS <i>•</i> SEM BACKEND</span><button id="start" class="primary-btn"><span>INICIAR TESTE</span><b>↗</b></button></div>
         </footer>
-        <div class="result-wrap hidden" id="result-wrap" role="dialog" aria-modal="false" aria-labelledby="result-title"><div class="result-card"><div class="result-topline">RELATÓRIO DE IMPACTO <span>GC // 001</span></div><div class="result-emblem">✳</div><h2 id="result-title">TESTE CONCLUÍDO</h2><p class="result-description">Chance de sobrevivência <strong>fictícia</strong> para entretenimento.</p><div class="survival"><strong id="survival">00</strong><span>%</span></div><div class="result-metrics"><div><small>VELOCIDADE DE IMPACTO</small><b id="impact-speed">—</b></div><div><small>DANOS NO VEÍCULO</small><b id="damage">—</b></div></div><button id="retry" class="primary-btn result-retry">TESTAR NOVAMENTE <b>↻</b></button><small class="disclaimer">Não representa uma estimativa real de segurança ou lesões.</small></div></div>
+        <div class="result-wrap hidden" id="result-wrap" role="dialog" aria-modal="false" aria-labelledby="result-title"><div class="result-card"><div class="result-topline">RELATÓRIO DE IMPACTO <span>GC // 001</span></div><div class="result-emblem">✳</div><h2 id="result-title">TESTE CONCLUÍDO</h2><p class="result-description">Chance de sobrevivência <strong>fictícia</strong> para entretenimento.</p><div class="survival"><strong id="survival">00</strong><span>%</span></div><div class="result-metrics"><div><small>VELOCIDADE DE IMPACTO</small><b id="impact-speed">—</b></div><div><small>DANOS NO VEÍCULO</small><b id="damage">—</b></div><div id="result-bumps" class="hidden"><small>LOMBADAS SUPERADAS</small><b id="result-bumps-count">0/120</b></div></div><button id="retry" class="primary-btn result-retry">TESTAR NOVAMENTE <b>↻</b></button><small class="disclaimer">Não representa uma estimativa real de segurança ou lesões.</small></div></div>
         <div class="loading" id="loading"><div class="loading-logo">✳</div><strong>INICIALIZANDO SIMULAÇÃO</strong><span id="loading-status">Preparando motor físico 3D…</span></div>
         <div class="fatal hidden" id="fatal"><strong>Não foi possível iniciar o jogo.</strong><span id="fatal-message"></span><button onclick="location.reload()">TENTAR NOVAMENTE</button></div>
       </div>

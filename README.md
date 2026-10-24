@@ -51,3 +51,10 @@ Licença MIT.
 A simulação começa parada. No celular, pressione e mantenha **ACELERAR** para avançar; solte para reduzir a velocidade. **FREAR** desacelera o carro e as setas controlam a direção. No desktop, use **W/↑** para acelerar e **S/↓/espaço** para frear.
 
 A publicação no GitHub Pages é realizada automaticamente pelo workflow de CI na `main`, somente após testes unitários, build e QA nos navegadores Chromium e WebKit aprovados.
+
+## Turbo 600 km/h e 120 lombadas
+
+- Acelerador por toque (segurar) e teclado (W/↑), com limite ajustável de **60 a 600 km/h**; padrão 600 km/h para todos os carros em modo arcade.
+- Cenário **120 LOMBADAS**: pista estendida, 120 lombadas físicas renderizadas com instancing, contador de passagem e desgaste acumulado ficcional.
+- A simulação continua depois de cada lombada; o relatório exibe quantas foram superadas.
+- Sem dependências pagas, sem servidor obrigatório, testado na CI em Chromium e WebKit.
