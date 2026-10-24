@@ -15,7 +15,7 @@ test('catálogo cobre 10 carros e 3 cenários', () => {
 });
 
 async function glb(path) {
-  const buf = await readFile(new URL(path, base));
+  const buf = await readFile(new URL('../public/'+path, import.meta.url));
   assert.ok(buf.length > 1000, `GLB incompleto: ${path}`);
   assert.equal(buf.toString('ascii', 0, 4), 'glTF');
   assert.equal(buf.readUInt32LE(4), 2);
@@ -39,9 +39,9 @@ test('todos os 10 GLBs de veículos são válidos', async () => {
   for (const [id, car] of Object.entries(manifest.cars)) {
     assert.ok(car.massKg > 600 && car.massKg < 2300, id);
     assert.ok(car.collider.halfExtents.every(v => v > 0), id);
-    const model = await glb(car.filename);
-    assert.ok(model.nodes.some(n => n.name === 'painted_body'), id);
-    assert.ok(model.nodes.filter(n => n.name === 'tire').length === 4, id);
+    const model = await glb(car.file);
+    assert.ok(model.nodes.some(n => n.name.startsWith('body_')), id);
+    assert.ok(model.nodes.filter(n => n.name.startsWith('wheel_tire_')).length === 4, id);
   }
 });
 
@@ -50,9 +50,9 @@ test('os cenários possuem pistas, spawn, rota e obstáculos', async () => {
     assert.equal(map.spawn.position.length, 3, id);
     assert.ok(map.route.length >= 15, id);
     assert.ok(map.obstacles.length > 0, id);
-    assert.equal(map.notGeographicallyExact, true);
-    const model = await glb(map.filename);
-    assert.ok(model.nodes.some(n => n.name === 'COLLIDER_road'), id);
-    assert.ok(model.nodes.some(n => n.name.startsWith('COLLIDER_obstacle') || n.name === 'COLLIDER_ramp'), id);
+    assert.equal(map.geographicallyExact, false);
+    const model = await glb(map.file);
+    assert.ok(model.nodes.some(n => n.name.startsWith('COLLIDER_road')), id);
+    assert.ok(model.nodes.some(n => n.name.startsWith('COLLIDER_barrier') || n.name.startsWith('COLLIDER_obstacle') || n.name.startsWith('COLLIDER_ramp')), id);
   }
 });
