@@ -1,0 +1,22 @@
+{
+  "cars": [
+    "gol",
+    "strada",
+    "palio",
+    "onix",
+    "uno",
+    "hb20",
+    "fiesta",
+    "ka",
+    "fox",
+    "celta"
+  ],
+  "maps": [
+    "brasilia-eixo-monumental",
+    "imigrantes",
+    "serra-do-rio-do-rastro"
+  ],
+  "units": "meters",
+  "axis": "Y-up",
+  "note": "Conteudo grafico procedural gratuito em branch separada"
+}
