@@ -31,7 +31,7 @@ async function glb(path) {
   assert.ok(model.bufferViews.every(v => v.byteOffset % 4 === 0));
   const offset = 20 + len;
   assert.deepEqual([...buf.subarray(offset + 4, offset + 8)], [66, 73, 78, 0]);
-  assert.equal(model.buffers[0].byteLength <= buf.readUInt32LE(offset));
+  assert.ok(model.buffers[0].byteLength <= buf.readUInt32LE(offset));
   return model;
 }
 
