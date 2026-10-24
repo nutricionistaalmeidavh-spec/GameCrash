@@ -2,7 +2,8 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {buildTrack,type Track} from './track';
 import {createVehicle,type VehicleVisual} from './vehicle';
-import {SCENARIOS,VEHICLES,fictionalImpact,kmh,progressFraction,clamp,type VehicleId,type ScenarioId,type GamePhase} from './rules';
+import {SCENARIOS,VEHICLES,fictionalImpact,kmh,progressFraction,clamp,type VehicleId,type ScenarioId,type GamePhase,type SceneryId} from './rules';
+import {loadBrazilCar,loadBrazilScenery,disposeBrazilObject,type BrazilCarId,type BrazilMapId} from '../brazil/adapter';
 
 export interface Result {speed:number;damage:number;survival:number;avoided:boolean;scenario:ScenarioId}
 export interface Telemetry {speed:number;distance:number;integrity:number;phase:GamePhase;progress:number}
@@ -22,6 +23,10 @@ export class Game {
   private phase:GamePhase='ready';
   private vehicleId:VehicleId='sedan';
   private scenarioId:ScenarioId='wall';
+  private sceneryId:SceneryId='original';
+  private scenery?:THREE.Group;
+  private carAsset?:THREE.Group;
+  private resourceRevision=0;
   private controls:Controls={left:false,right:false,brake:false,throttle:false};
   private startedAt=0;
   private accumulator=0;
@@ -55,10 +60,14 @@ export class Game {
   get phaseState(){return this.phase}
   selectVehicle(id:VehicleId){this.vehicleId=id;this.reset()}
   selectScenario(id:ScenarioId){this.scenarioId=id;this.reset()}
+  selectScenery(id:SceneryId){this.sceneryId=id;this.reset()}
   toggleCamera(){this.viewMode=this.viewMode===0?1:0}
   setControls(patch:Partial<Controls>){Object.assign(this.controls,patch)}
   start(){if(this.phase==='running')return;this.reset();this.phase='running';this.controls.throttle=true;this.startedAt=performance.now()}
   private reset(){
+    const revision=++this.resourceRevision;
+    if(this.scenery){this.scene.remove(this.scenery);disposeBrazilObject(this.scenery);this.scenery=undefined}
+    this.carAsset=undefined;
     if(this.track)this.track.dispose();
     if(this.visual){
       this.scene.remove(this.visual.root);
@@ -72,6 +81,28 @@ export class Game {
     this.track=buildTrack(this.scene,this.world,this.scenarioId);
     const spec=VEHICLES[this.vehicleId];
     this.visual=createVehicle(spec);this.scene.add(this.visual.root);
+    const visual=this.visual;
+    if(spec.modelFile){
+      void loadBrazilCar(this.vehicleId as BrazilCarId).then(asset=>{
+        if(this.resourceRevision!==revision || visual!==this.visual){disposeBrazilObject(asset);return}
+        // The existing Rapier body is centered on the chassis; GLBs use ground-relative Y.
+        asset.position.y=-(spec.size[1]*.53+.08);
+        visual.root.children.forEach(obj=>obj.visible=false);
+        visual.root.add(asset);this.carAsset=asset;
+        const oldDeform=visual.deform.bind(visual);
+        visual.deform=(damage)=>{
+          oldDeform(damage);
+          asset.scale.z=Math.max(.48,1-damage*.004);
+          asset.rotation.x=damage*.0016;
+        };
+      }).catch(error=>console.warn('Carro brasileiro: usando modelo de reserva',error));
+    }
+    if(this.sceneryId!=='original'){
+      void loadBrazilScenery(this.sceneryId as BrazilMapId).then(map=>{
+        if(this.resourceRevision!==revision){disposeBrazilObject(map);return}
+        this.scenery=map;this.scene.add(map);
+      }).catch(error=>console.warn('Paisagem brasileira: usando pista padrão',error));
+    }
     const [w,h,l]=spec.size;
     this.body=this.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0,h*.53+0.08,0).setLinearDamping(.18).setAngularDamping(1.6).setCcdEnabled(true));
     this.collider=this.world.createCollider(RAPIER.ColliderDesc.cuboid(w*.47,h*.47,l*.48).setDensity(spec.mass/(w*h*l)).setFriction(1).setRestitution(.05).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS),this.body);
@@ -148,5 +179,5 @@ export class Game {
     }
     this.renderer.render(this.scene,this.camera);
   };
-  dispose(){cancelAnimationFrame(this.raf);window.removeEventListener('resize',this.resize);this.track?.dispose();this.queue?.free();this.world?.free();this.renderer.dispose()}
+  dispose(){++this.resourceRevision;if(this.scenery){this.scene.remove(this.scenery);disposeBrazilObject(this.scenery)}cancelAnimationFrame(this.raf);window.removeEventListener('resize',this.resize);this.track?.dispose();this.queue?.free();this.world?.free();this.renderer.dispose()}
 }
