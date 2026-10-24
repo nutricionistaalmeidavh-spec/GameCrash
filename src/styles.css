@@ -109,3 +109,40 @@ button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}butto
 }
 @media(max-height:750px) and (max-width:700px){#vehicles{max-height:76px}.sceneries .pick{min-height:25px}.controls-float{bottom:calc(308px + env(safe-area-inset-bottom))}}
 @media(max-width:700px){.controls-float{bottom:calc(52dvh + env(safe-area-inset-bottom) + 8px)}}
+
+/* The garage is a pre-drive screen. Driving uses the entire viewport. */
+body:not([data-phase='ready']) .bottom-panel{display:none}
+.garage-btn{padding:10px 12px;border:1px solid #ffffff50;background:#15212ad9;border-radius:10px;color:#fff;font-size:11px;font-weight:800}
+body[data-phase='ready'] #garage,body[data-phase='ready'] #restart{display:none}
+.controls-float{left:24px;right:24px;bottom:max(24px,env(safe-area-inset-bottom));justify-content:space-between;visibility:hidden}
+body[data-phase='running'] .controls-float{visibility:visible}
+.steering-controls,.pedal-controls{display:flex;gap:12px;align-items:center}
+.drive-btn{height:76px;width:76px;-webkit-touch-callout:none}
+.brake-btn{width:85px}.accel-btn{width:112px}
+@media(max-width:700px){
+  .controls-float{left:12px;right:12px;bottom:calc(15px + env(safe-area-inset-bottom));gap:12px}
+  .steering-controls,.pedal-controls{gap:7px}
+  .drive-btn{height:68px;width:58px}.brake-btn{width:65px;font-size:12px}.accel-btn{width:91px;font-size:11px}
+  .header-right{gap:5px}.garage-btn{padding:10px 8px;font-size:9px}
+  .topbar{gap:8px;align-items:center}.brand{font-size:18px;gap:6px}.brand-icon{width:30px;height:30px}
+  .header-right{gap:4px}.icon-btn{width:30px;height:30px}.garage-btn{padding:9px 6px;font-size:8px}
+  body:not([data-phase='ready']) .stage-marker{top:70px}
+}
+@media(max-height:500px) and (orientation:landscape){
+  .topbar{padding:10px 16px}.brand{font-size:21px}.brand-icon{width:30px;height:30px}
+  .stage-marker{top:18px;font-size:8px;max-width:40%;overflow:hidden;text-overflow:ellipsis}
+  .hud{top:73px;left:16px;gap:8px}.speed-line strong{font-size:52px}.speed-track{width:130px}
+  .bottom-panel{max-height:65dvh;overflow:auto;pointer-events:auto}
+  .controls-float{bottom:calc(12px + env(safe-area-inset-bottom))}
+  .drive-btn{height:60px}
+}
+.inspection-tools{display:none;position:absolute;bottom:calc(18px + env(safe-area-inset-bottom));left:14px;right:14px;align-items:center;justify-content:flex-end;gap:8px}
+body[data-phase='crashed'] .inspection-tools{display:flex}
+.inspection-tools span{margin-right:auto;color:#d5e1e5;font-size:11px;text-shadow:0 1px 4px #000}
+.inspection-tools button:disabled{opacity:.4;cursor:default}
+.inspect-btn{width:100%;border:1px solid #75818a;border-radius:7px;background:#1d2c38;color:#e9f0f5;font-size:11px;font-weight:800;padding:12px;margin-top:10px}
+.result-card{max-height:92dvh;overflow-y:auto;overscroll-behavior:contain}
+.result-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));row-gap:15px}
+.result-metrics:has(#result-bumps:not(.hidden)){display:grid}
+#result-bumps{grid-column:1/-1}
+@media(max-width:700px){.inspection-tools{flex-wrap:wrap;justify-content:center}.inspection-tools span{flex-basis:100%;text-align:center;margin-right:0}.result-card{padding:18px}.result-emblem{font-size:40px}.survival{font-size:76px}.result-metrics b{font-size:21px}}

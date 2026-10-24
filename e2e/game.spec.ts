@@ -9,7 +9,7 @@ test('carrega a cena WebGL no desktop e no WebKit iPhone',async({page},testInfo)
   await expect(page.locator('#vehicles button')).toHaveCount(13);
   await expect(page.locator('#scenarios button')).toHaveCount(4);
   await expect(page.locator('#sceneries button')).toHaveCount(4);
-  await expect(page.getByRole('button',{name:'Acelerar'})).toHaveCount(1);
+  await expect(page.locator('#accelerate')).toHaveCount(1);
   await page.getByRole('button',{name:/VOLKSWAGEN GOL/}).click();
   await page.locator('[data-scenery="brasilia-eixo-monumental"]').click();
   await page.getByRole('button',{name:/BLOCOS/}).click();
@@ -52,6 +52,19 @@ test('mostra o resultado do impacto e permite reiniciar',async({page},testInfo)=
   await expect(page.locator('#result-wrap')).toBeVisible({timeout:45_000});
   await page.locator('#accelerate').dispatchEvent('pointerup',{pointerId:8,pointerType:'touch'});
   await expect(page.locator('#impact-speed')).not.toHaveText('—');
+  await expect.poll(async()=>Number((await page.locator('#deformation-energy').textContent())?.replace(/[^\d]/g,''))).toBeGreaterThan(0);
+  await page.locator('#inspect').click();
+  await expect(page.locator('#result-wrap')).toBeHidden();
+  await expect(page.locator('#report')).toBeEnabled();
+  await expect(page.locator('#slow-motion')).toBeVisible();
+  await page.locator('#slow-motion').click();await expect(page.locator('#slow-motion')).toHaveText('1×');
+  await page.locator('#slow-motion').click();await expect(page.locator('#slow-motion')).toHaveText('0,1×');
+  await page.locator('#slow-motion').click();await expect(page.locator('#slow-motion')).toHaveText('PAUSADO');
+  const viewport=page.viewportSize()!;
+  await page.mouse.move(viewport.width*.5,viewport.height*.5);await page.mouse.down();
+  await page.mouse.move(viewport.width*.7,viewport.height*.48,{steps:6});await page.mouse.up();
+  await testInfo.attach('physical-wreck-inspection',{body:await page.screenshot({path:testInfo.outputPath('physical-wreck.png')}),contentType:'image/png'});
+  await page.locator('#report').click();await expect(page.locator('#result-wrap')).toBeVisible();
   await testInfo.attach('impact-result',{body:await page.screenshot(),contentType:'image/png'});
   await page.locator('#retry').click();
   await expect(page.locator('#result-wrap')).toBeHidden();
@@ -86,4 +99,60 @@ test('turbo a 600 km/h e seleção do desafio de 120 lombadas',async({page})=>{
   await expect.poll(async()=>Number(await page.locator('#speed').textContent()),{timeout:25_000}).toBeGreaterThan(60);
   await expect.poll(async()=>Number((await page.locator('#bumps-count').textContent())?.split('/')[0]),{timeout:30_000}).toBeGreaterThan(0);
   await page.locator('#accelerate').dispatchEvent('pointerup',{pointerId:50,pointerType:'touch'});
+});
+
+test('garagem recolhe, pedais ficam acessíveis e reiniciar funciona durante a corrida',async({page},testInfo)=>{
+  await page.goto('/');
+  await expect(page.locator('#loading')).toBeHidden();
+  await page.locator('#start').click();
+  await expect(page.locator('.bottom-panel')).toBeHidden();
+  const pedal=page.locator('#accelerate');
+  await expect(pedal).toBeVisible();
+  // A real pointer gesture must hit the accelerator, rather than dispatching through an overlay.
+  const box=await pedal.boundingBox();if(!box)throw new Error('Acelerador fora da tela');
+  await page.mouse.move(box.x+box.width/2,box.y+box.height/2);await page.mouse.down();
+  await expect(pedal).toHaveAttribute('aria-pressed','true');
+  await expect.poll(async()=>Number(await page.locator('#speed').textContent())).toBeGreaterThan(25);
+  await page.mouse.up();
+  await page.locator('#brake').dispatchEvent('pointerdown',{pointerId:82,pointerType:'touch'});
+  await expect.poll(async()=>Number(await page.locator('#speed').textContent())).toBeLessThan(5);
+  await page.locator('#brake').dispatchEvent('pointerup',{pointerId:82,pointerType:'touch'});
+  await page.locator('#restart').click();
+  await expect(page.locator('body')).toHaveAttribute('data-phase','running');
+  await expect(page.locator('#speed')).toHaveText('000');
+  await testInfo.attach('gameplay-full-screen',{body:await page.screenshot({path:testInfo.outputPath('gameplay.png')}),contentType:'image/png'});
+  await page.locator('#garage').click();
+  await expect(page.locator('body')).toHaveAttribute('data-phase','ready');
+  await expect(page.locator('.bottom-panel')).toBeVisible();
+});
+
+test('multitoque e cancelamento não deixam o acelerador preso',async({page})=>{
+  await page.goto('/');await expect(page.locator('#loading')).toBeHidden();await page.locator('#start').click();
+  await page.locator('#accelerate').dispatchEvent('pointerdown',{pointerId:91,pointerType:'touch'});
+  await page.locator('#right').dispatchEvent('pointerdown',{pointerId:92,pointerType:'touch'});
+  await expect(page.locator('#accelerate')).toHaveAttribute('aria-pressed','true');
+  await expect(page.locator('#right')).toHaveClass(/pressed/);
+  await page.locator('#right').dispatchEvent('pointercancel',{pointerId:92,pointerType:'touch'});
+  await expect(page.locator('#right')).not.toHaveClass(/pressed/);
+  await expect(page.locator('#accelerate')).toHaveAttribute('aria-pressed','true');
+  await page.evaluate(()=>window.dispatchEvent(new Event('blur')));
+  await expect(page.locator('#accelerate')).toHaveAttribute('aria-pressed','false');
+});
+
+test('controles cabem no celular em retrato e paisagem',async({page},testInfo)=>{
+  await page.setViewportSize({width:390,height:844});
+  await page.goto('/');await expect(page.locator('#loading')).toBeHidden();
+  await page.locator('[data-vehicle="gol"]').click();
+  await page.locator('#start').click();
+  for(const viewport of [{width:390,height:844},{width:844,height:390}]){
+    await page.setViewportSize(viewport);
+    for(const id of ['left','right','brake','accelerate','garage','restart','camera','mute']){
+      await expect(page.locator('#'+id)).toBeVisible();
+      expect(await page.locator('#'+id).evaluate(el=>{
+        const b=el.getBoundingClientRect();
+        return b.x>=0&&b.y>=0&&b.right<=innerWidth&&b.bottom<=innerHeight&&document.elementFromPoint(b.x+b.width/2,b.y+b.height/2)===el;
+      })).toBe(true);
+    }
+    await testInfo.attach('mobile-'+viewport.width,{body:await page.screenshot({path:testInfo.outputPath('mobile-'+viewport.width+'.png')}),contentType:'image/png'});
+  }
 });

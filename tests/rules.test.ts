@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {VEHICLES,SCENARIOS,fictionalImpact,progressFraction,kmh,clamp,MAX_SPEED_KMH,SPEEDBUMPS,countBumpsPassed,clampSpeedLimit,nextForwardVelocity} from '../src/game/rules.ts';
+import {VEHICLES,SCENARIOS,fictionalImpact,progressFraction,kmh,clamp,MAX_SPEED_KMH,SPEEDBUMPS,countBumpsPassed,clampSpeedLimit} from '../src/game/rules.ts';
 test('configures 13 vehicles and four crash challenges',()=>{
   assert.equal(Object.keys(VEHICLES).length,13);
   assert.deepEqual(Object.keys(SCENARIOS).sort(),['blocks','ramp','speedbumps','wall']);
@@ -31,15 +31,10 @@ test('all values stay bounded even with extreme inputs',()=>{
   assert.equal(clamp(4,0,3),3);
 });
 
-test('turbo accelerator supports up to 600 km/h without exceeding the configured cap',()=>{
+test('turbo limit accepts only 60 to 600 km/h',()=>{
   assert.equal(MAX_SPEED_KMH,600);
   assert.equal(clampSpeedLimit(1000),600);
   assert.equal(clampSpeedLimit(20),60);
-  let velocity=0;
-  for(let i=0;i<60*24;i++)velocity=nextForwardVelocity(velocity,VEHICLES.sedan,true,false,1/60,600);
-  assert.equal(Math.round(kmh(velocity)),600);
-  assert.ok(nextForwardVelocity(velocity,VEHICLES.sedan,true,false,1/60,300)<=300/3.6);
-  assert.ok(nextForwardVelocity(velocity,VEHICLES.sedan,false,true,1/60,600)<velocity);
 });
 test('speedbump course contains exactly 120 sequential bumps and tracks progress',()=>{
   assert.equal(SPEEDBUMPS.count,120);
