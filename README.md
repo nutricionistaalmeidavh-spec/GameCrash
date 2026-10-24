@@ -45,3 +45,9 @@ O build fica em `dist/` e pode ser hospedado em qualquer servidor estático.
 O workflow de QA executa testes e build em toda PR e push em branch de feature. O build é publicado como artefato. Para publicar no GitHub Pages, selecione em Settings → Pages → Build and deployment o modo GitHub Actions e então execute manualmente o workflow Publish GitHub Pages (opt-in). O workflow de Pages roda na branch padrão.
 
 Licença MIT.
+
+## Controles atualizados
+
+A simulação começa parada. No celular, pressione e mantenha **ACELERAR** para avançar; solte para reduzir a velocidade. **FREAR** desacelera o carro e as setas controlam a direção. No desktop, use **W/↑** para acelerar e **S/↓/espaço** para frear.
+
+A publicação no GitHub Pages é realizada automaticamente pelo workflow de CI na `main`, somente após testes unitários, build e QA nos navegadores Chromium e WebKit aprovados.
