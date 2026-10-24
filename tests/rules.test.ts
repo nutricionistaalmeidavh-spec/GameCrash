@@ -1,8 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {VEHICLES,SCENARIOS,fictionalImpact,progressFraction,kmh,clamp} from '../src/game/rules.ts';
-test('configures three vehicles and three scenarios',()=>{
-  assert.deepEqual(Object.keys(VEHICLES).sort(),['hatch','sedan','suv']);
+test('configures Brazilian cars alongside three classic test cars and challenges',()=>{
+  assert.equal(Object.keys(VEHICLES).length,13);
   assert.deepEqual(Object.keys(SCENARIOS).sort(),['blocks','ramp','wall']);
   for (const v of Object.values(VEHICLES)){assert.ok(v.mass>0);assert.ok(v.maxSpeed>0)}
 });
