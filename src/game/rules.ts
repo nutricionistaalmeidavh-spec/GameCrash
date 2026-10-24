@@ -22,7 +22,7 @@ export interface VehicleSpec {
   modelFile?:string;
 }
 export interface ScenarioSpec { id: ScenarioId; label: string; icon: string; subtitle: string; z: number }
-export const VEHICLES: Record<VehicleId, VehicleSpec> = {
+export const VEHICLES = {
   sedan: { id:'sedan', name:'SEDAN GT',kind:'EQUILIBRADO', color:0xe7eff9,mass:1450,acceleration:12.5,maxSpeed:230,resistance:1,size:[1.9,1.12,4.55]},
   hatch: { id:'hatch', name:'HATCH RS',kind:'LEVE & RÁPIDO',color:0x80b2ff,mass:1080,acceleration:15,maxSpeed:250,resistance:0.77,size:[1.78,1.12,3.9]},
   suv: { id:'suv', name:'SUV TITAN',kind:'PESADO & FORTE',color:0xffc16e,mass:2130,acceleration:10,maxSpeed:195,resistance:1.2,size:[2.08,1.48,4.95]},
@@ -36,7 +36,7 @@ export const VEHICLES: Record<VehicleId, VehicleSpec> = {
       resistance:Math.max(.68,Math.min(1.15,car.massKg/1200)),
       size:[width,height,length],modelFile:car.file} satisfies VehicleSpec];
   }))
-};
+} as Record<VehicleId, VehicleSpec>;
 export const SCENARIOS: Record<ScenarioId,ScenarioSpec> = {
   wall: {id:'wall', label:'PAREDE',icon:'▤',subtitle:'Barreira de concreto',z:205},
   blocks: {id:'blocks',label:'BLOCOS',icon:'▥',subtitle:'Obstáculos em sequência',z:202},
