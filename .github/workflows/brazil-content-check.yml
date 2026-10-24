@@ -1,0 +1,26 @@
+name: Validate Brazil content
+on:
+  push:
+    branches:
+      - feat/brasil-mapas-carros
+    paths:
+      - 'public/assets/brazil/**'
+      - 'src/brazil/**'
+      - 'tests/brazil-assets.test.mjs'
+      - '.github/workflows/brazil-content-check.yml'
+  workflow_dispatch:
+permissions:
+  contents: read
+jobs:
+  glb:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Validate content
+        run: |
+          node --test tests/brazil-assets.test.mjs
+          node --check src/brazil/assets.mjs
+          node --check src/brazil/rapier.mjs

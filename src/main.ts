@@ -1,10 +1,10 @@
 import './styles.css';
 import {Game,type Result} from './game/Game';
-import {SCENARIOS,VEHICLES,MAX_SPEED_KMH,SPEEDBUMPS,type ScenarioId,type VehicleId} from './game/rules';
+import {SCENARIOS,VEHICLES,SCENERIES,MAX_SPEED_KMH,SPEEDBUMPS,type ScenarioId,type VehicleId,type SceneryId} from './game/rules';
 
 const element=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const $={
-  canvas:element<HTMLCanvasElement>('game'),vehicles:element<HTMLDivElement>('vehicles'),scenarios:element<HTMLDivElement>('scenarios'),
+  canvas:element<HTMLCanvasElement>('game'),vehicles:element<HTMLDivElement>('vehicles'),scenarios:element<HTMLDivElement>('scenarios'),sceneries:element<HTMLDivElement>('sceneries'),
   start:element<HTMLButtonElement>('start'),retry:element<HTMLButtonElement>('retry'),camera:element<HTMLButtonElement>('camera'),mute:element<HTMLButtonElement>('mute'),
   speed:element<HTMLSpanElement>('speed'),speedBar:element<HTMLSpanElement>('speed-bar'),distance:element<HTMLSpanElement>('distance'),
   integrity:element<HTMLSpanElement>('integrity'),marker:element<HTMLSpanElement>('stage-marker'),
@@ -16,7 +16,7 @@ const $={
   damage:element<HTMLSpanElement>('damage'),controls:element<HTMLDivElement>('drive-controls'),
   loading:element<HTMLDivElement>('loading'),fatal:element<HTMLDivElement>('fatal'),fatalMessage:element<HTMLSpanElement>('fatal-message'),
 };
-let currentVehicle:VehicleId='sedan',currentScenario:ScenarioId='wall';
+let currentVehicle:VehicleId='sedan',currentScenario:ScenarioId='wall',currentScenery:SceneryId='original';
 let resultTimer:number|undefined;
 let soundEnabled=false;
 let lastPhase='ready';
@@ -48,6 +48,7 @@ function showResult(result:Result){
 function updateSelectors(){
   for(const btn of $.vehicles.querySelectorAll('button'))btn.classList.toggle('selected',btn.dataset.vehicle===currentVehicle);
   for(const btn of $.scenarios.querySelectorAll('button'))btn.classList.toggle('selected',btn.dataset.scenario===currentScenario);
+  for(const btn of $.sceneries.querySelectorAll('button'))btn.classList.toggle('selected',btn.dataset.scenery===currentScenery);
   $.bumpsStat.classList.toggle('hidden',currentScenario!=='speedbumps');
 }
 function hideResult(){if(resultTimer)clearTimeout(resultTimer);$.result.classList.add('hidden')}
@@ -62,6 +63,14 @@ function buildSelectors(){
     const b=document.createElement('button');b.type='button';b.className='pick scenario';b.dataset.scenario=id;
     b.innerHTML=`<span class="scenario-glyph">${s.icon}</span><span class="pick-text"><b>${s.label}</b><small>${s.subtitle}</small></span><span class="radio-dot"></span>`;
     b.addEventListener('click',()=>{hideResult();currentScenario=id as ScenarioId;game.selectScenario(currentScenario);updateSelectors()});$.scenarios.append(b);
+  }
+  for(const [id,s] of Object.entries(SCENERIES)){
+    const b=document.createElement('button');b.type='button';b.className='pick scenery';b.dataset.scenery=id;
+    const name=document.createElement('span');name.className='pick-text';
+    const strong=document.createElement('b');strong.textContent=s.label;
+    name.append(strong);b.append(name);
+    b.addEventListener('click',()=>{hideResult();currentScenery=id as SceneryId;game.selectScenery(currentScenery);updateSelectors()});
+    $.sceneries.append(b);
   }
   updateSelectors();
 }

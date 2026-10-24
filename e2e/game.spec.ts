@@ -6,12 +6,14 @@ test('carrega a cena WebGL no desktop e no WebKit iPhone',async({page},testInfo)
   await page.goto('/');
   await expect(page.locator('#loading')).toBeHidden({timeout:30_000});
   await expect(page.locator('#fatal')).toBeHidden();
-  await expect(page.locator('#vehicles button')).toHaveCount(3);
+  await expect(page.locator('#vehicles button')).toHaveCount(13);
   await expect(page.locator('#scenarios button')).toHaveCount(4);
+  await expect(page.locator('#sceneries button')).toHaveCount(4);
   await expect(page.getByRole('button',{name:'Acelerar'})).toHaveCount(1);
-  await page.getByRole('button',{name:/SUV TITAN/}).click();
+  await page.getByRole('button',{name:/VOLKSWAGEN GOL/}).click();
+  await page.locator('[data-scenery="brasilia-eixo-monumental"]').click();
   await page.getByRole('button',{name:/BLOCOS/}).click();
-  await expect(page.locator('[data-vehicle="suv"]')).toHaveClass(/selected/);
+  await expect(page.locator('[data-vehicle="gol"]')).toHaveClass(/selected/);
   await expect(page.locator('[data-scenario="blocks"]')).toHaveClass(/selected/);
   await testInfo.attach('selection-screen',{body:await page.screenshot(),contentType:'image/png'});
   expect(errors).toEqual([]);
