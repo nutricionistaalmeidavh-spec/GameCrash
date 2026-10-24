@@ -57,7 +57,7 @@ export class Game {
   selectScenario(id:ScenarioId){this.scenarioId=id;this.reset()}
   toggleCamera(){this.viewMode=this.viewMode===0?1:0}
   setControls(patch:Partial<Controls>){Object.assign(this.controls,patch)}
-  start(){if(this.phase==='running')return;this.reset();this.phase='running';this.controls.throttle=true;this.startedAt=performance.now()}
+  start(){if(this.phase==='running')return;this.reset();this.phase='running';this.controls.throttle=false;this.startedAt=performance.now()}
   private reset(){
     if(this.track)this.track.dispose();
     if(this.visual){
