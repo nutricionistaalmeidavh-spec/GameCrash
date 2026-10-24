@@ -2,8 +2,9 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {buildTrack,type Track} from './track';
 import {createVehicle,type VehicleVisual} from './vehicle';
+import {VehicleDynamics,PHYSICS_DT,EMPTY_INPUT} from './driving';
 import {loadBrazilCar,loadBrazilScenery,disposeBrazilObject,type BrazilCarId,type BrazilMapId} from '../brazil/adapter';
-import {SCENARIOS,VEHICLES,fictionalImpact,kmh,progressFraction,clamp,MAX_SPEED_KMH,SPEEDBUMPS,countBumpsPassed,clampSpeedLimit,nextForwardVelocity,type VehicleId,type ScenarioId,type GamePhase,type SceneryId} from './rules';
+import {SCENARIOS,VEHICLES,fictionalImpact,kmh,progressFraction,clamp,MAX_SPEED_KMH,SPEEDBUMPS,countBumpsPassed,clampSpeedLimit,type VehicleId,type ScenarioId,type GamePhase,type SceneryId} from './rules';
 
 export interface Result {speed:number;damage:number;survival:number;avoided:boolean;scenario:ScenarioId;bumpsPassed:number}
 export interface Telemetry {speed:number;distance:number;integrity:number;phase:GamePhase;progress:number;bumpsPassed:number}
@@ -18,6 +19,7 @@ export class Game {
   private queue!:RAPIER.EventQueue;
   private body!:RAPIER.RigidBody;
   private collider!:RAPIER.Collider;
+  private driving!:VehicleDynamics;
   private track!:Track;
   private visual!:VehicleVisual;
   private phase:GamePhase='ready';
@@ -28,7 +30,9 @@ export class Game {
   private carAsset?:THREE.Group;
   private resourceRevision=0;
   private controls:Controls={left:false,right:false,brake:false,throttle:false};
-  private startedAt=0;
+  private elapsed=0;
+  private overturnedTime=0;
+  private integrity=100;
   private accumulator=0;
   private lastTelemetry=0;
   private hitSpeed=0;
@@ -38,8 +42,10 @@ export class Game {
   private hadAir=false;
   private viewMode:0|1=0;
   private raf=0;
-  private readonly timestep=1/60;
+  private readonly timestep=PHYSICS_DT;
   private readonly boxPosition=new THREE.Vector3();
+  private readonly heading=new THREE.Vector3();
+  private readonly cameraTarget=new THREE.Vector3();
   constructor(private canvas:HTMLCanvasElement,private options:GameOptions){
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(Math.min(1.7,window.devicePixelRatio||1));
@@ -67,7 +73,8 @@ export class Game {
   toggleCamera(){this.viewMode=this.viewMode===0?1:0}
   setControls(patch:Partial<Controls>){Object.assign(this.controls,patch)}
   setSpeedLimitKmh(value:number){this.speedLimitKmh=clampSpeedLimit(value)}
-  start(){if(this.phase==='running')return;this.reset();this.phase='running';this.controls.throttle=false;this.startedAt=performance.now()}
+  start(){this.reset();this.phase='running'}
+  returnToGarage(){this.reset()}
   private reset(){
     const revision=++this.resourceRevision;
     if(this.scenery){this.scene.remove(this.scenery);disposeBrazilObject(this.scenery);this.scenery=undefined}
@@ -91,14 +98,11 @@ export class Game {
         if(this.resourceRevision!==revision || visual!==this.visual){disposeBrazilObject(asset);return}
         // The existing Rapier body is centered on the chassis; GLBs use ground-relative Y.
         asset.position.y=-(spec.size[1]*.53+.08);
-        visual.root.children.forEach(obj=>obj.visible=false);
+        // Keep animated wheels; replace only the reserve body with the selected local GLB.
+        visual.root.children.forEach(obj=>obj.visible=visual.wheels.includes(obj as THREE.Group));
+        asset.traverse(obj=>{if(obj.name.startsWith('wheel_'))obj.visible=false});
         visual.root.add(asset);this.carAsset=asset;
-        const oldDeform=visual.deform.bind(visual);
-        visual.deform=(damage)=>{
-          oldDeform(damage);
-          asset.scale.z=Math.max(.48,1-damage*.004);
-          asset.rotation.x=damage*.0016;
-        };
+        visual.addDamageMeshes(asset);
       }).catch(error=>console.warn('Carro brasileiro: usando modelo de reserva',error));
     }
     if(this.sceneryId!=='original'){
@@ -107,96 +111,112 @@ export class Game {
         this.scenery=map;this.scene.add(map);
       }).catch(error=>console.warn('Paisagem brasileira: usando pista padrão',error));
     }
-    const [w,h,l]=spec.size;
-    this.body=this.world.createRigidBody(RAPIER.RigidBodyDesc.dynamic().setTranslation(0,h*.53+0.08,0).setLinearDamping(.18).setAngularDamping(1.6).setCcdEnabled(true));
-    this.collider=this.world.createCollider(RAPIER.ColliderDesc.cuboid(w*.47,h*.47,l*.48).setDensity(spec.mass/(w*h*l)).setFriction(1).setRestitution(.05).setActiveEvents(RAPIER.ActiveEvents.COLLISION_EVENTS),this.body);
+    this.driving=new VehicleDynamics(RAPIER,this.world,spec);
+    this.body=this.driving.body;this.collider=this.driving.collider;
+    // Settle the springs before showing the parked vehicle.
+    for(let i=0;i<120;i++){this.driving.update(EMPTY_INPUT,this.speedLimitKmh);this.world.step()}
+    this.queue.drainCollisionEvents(()=>{});
     this.phase='ready';this.controls={left:false,right:false,brake:false,throttle:false};
     this.hitSpeed=0;this.hadAir=false;this.accumulator=0;this.lastBumpIndex=0;this.bumpDamage=0;
-    this.visual.root.position.set(0,h*.53+.08,0);
-    this.camera.position.set(5,5.5,-12);
+    this.elapsed=0;this.overturnedTime=0;this.integrity=100;
+    const position=this.body.translation();this.visual.root.position.set(position.x,position.y,position.z);
+    this.camera.position.set(5,5.5,-12);this.cameraTarget.set(0,position.y,6);
     this.options.onTelemetry({phase:'ready',speed:0,distance:0,integrity:100,progress:0,bumpsPassed:0});
   }
   private readonly resize=()=>{const w=window.innerWidth,h=window.innerHeight;this.renderer.setSize(w,h,false);this.camera.aspect=w/Math.max(1,h);this.camera.fov=w<700?66:55;this.camera.updateProjectionMatrix()};
   private step(){
     if(this.phase==='ready')return;
     const dt=this.timestep;
-    if(this.phase==='running'){
-      const spec=VEHICLES[this.vehicleId];
-      const prev=this.body.linvel();
-      const steer=(Number(this.controls.right)-Number(this.controls.left));
-      const vx=clamp(prev.x*.94+steer*dt*(5+kmh(prev.z)*.09),-10.2,10.2);
-      const forward=nextForwardVelocity(prev.z,spec,this.controls.throttle,this.controls.brake,dt,this.speedLimitKmh);
-      this.body.setLinvel({x:vx,y:prev.y,z:forward},true);
-      // Upright arcade stabilization while driving; physics takes over after impact.
-      const desiredYaw=-steer*.045;
-      this.body.setRotation({x:0,y:Math.sin(desiredYaw/2),z:0,w:Math.cos(desiredYaw/2)},true);
-      this.body.setAngvel({x:0,y:0,z:0},true);
-      this.hitSpeed=kmh(forward);
-      this.visual.spin(forward*dt);
-    }
+    const incoming={...this.body.linvel()};
+    this.driving.update(this.phase==='running'?this.controls:EMPTY_INPUT,this.speedLimitKmh);
+    if(this.phase==='running')this.hitSpeed=kmh(this.driving.speed);
     this.world.step(this.queue);
     if(this.phase==='running'){
+      this.elapsed+=dt;
       let impacted=false;
       this.queue.drainCollisionEvents((a,b,started)=>{
         if(!started)return;
-        if((a===this.collider.handle&&this.track.obstacleHandles.has(b))||(b===this.collider.handle&&this.track.obstacleHandles.has(a)))impacted=true;
+        if((a===this.collider.handle&&this.track.obstacleHandles.has(b))||(b===this.collider.handle&&this.track.obstacleHandles.has(a))){
+          impacted=true;
+          // Use closing speed along the surface normal, not full forward speed on a glancing hit.
+          this.world.contactPair(this.world.getCollider(a),this.world.getCollider(b),manifold=>{
+            const n=manifold.normal();
+            this.hitSpeed=kmh(Math.abs(incoming.x*n.x+incoming.y*n.y+incoming.z*n.z));
+          });
+        }
       });
       const p=this.body.translation();
+      const q=this.body.rotation();
+      this.overturnedTime=(1-2*(q.x*q.x+q.z*q.z))<.15?this.overturnedTime+dt:0;
+      if(p.y< -6||Math.abs(p.x)>45||this.overturnedTime>3){this.finish(false);return}
       if(this.scenarioId==='speedbumps'){
+        if(Math.abs(p.x)>10){this.finish(false);return}
         const passed=countBumpsPassed(p.z);
         if(passed>this.lastBumpIndex){
-          for(let i=this.lastBumpIndex;i<passed;i++)
-            this.bumpDamage=clamp(this.bumpDamage+(0.08+this.hitSpeed/MAX_SPEED_KMH*.32)/VEHICLES[this.vehicleId].resistance,0,100);
           this.lastBumpIndex=passed;
-          const v=this.body.linvel();
-          this.body.setLinvel({x:v.x,y:Math.max(v.y,.9+this.hitSpeed/450),z:v.z*.995},true);
         }
+        // Damage follows suspension load and landings; crossing a Z coordinate adds no impulse.
+        const impactVelocity=Math.max(0,this.body.linvel().y-incoming.y-9.81*dt);
+        if(impactVelocity>1.4)this.bumpDamage=clamp(this.bumpDamage+(impactVelocity-1.4)*.7/VEHICLES[this.vehicleId].resistance,0,100);
+        this.integrity=100-Math.round(this.bumpDamage);
+        if(this.bumpDamage>=100){this.finish(false);return}
         if(p.z>=SPEEDBUMPS.finishZ)this.finish(true);
-        else if(performance.now()-this.startedAt>60000||p.y< -6)this.finish(false);
+        else if(this.elapsed>120)this.finish(false);
         return;
       }
       if(this.scenarioId==='ramp'){
-        if(p.z>SCENARIOS.ramp.z-8&&p.y>2.3)this.hadAir=true;
-        if(this.hadAir&&p.z>SCENARIOS.ramp.z+13&&p.y<1.0&&this.body.linvel().y<0)impacted=true;
+        if(p.z>SCENARIOS.ramp.z-8&&this.driving.groundedWheels===0)this.hadAir=true;
+        if(this.hadAir&&this.driving.groundedWheels>0&&incoming.y< -3.5){impacted=true;this.hitSpeed=kmh(Math.abs(incoming.y))}
       }
       if(impacted){this.finish(false)}
       else if(p.z>SCENARIOS[this.scenarioId].z+(this.scenarioId==='ramp'?100:22))this.finish(true);
-      else if((performance.now()-this.startedAt)>30000){this.finish(true)}
+      else if(this.elapsed>90){this.finish(false)}
     }
   }
   private finish(avoided:boolean){
     if(this.phase!=='running')return;
     this.phase='crashed';
+    this.controls={...EMPTY_INPUT};
     const speed=Math.round(this.hitSpeed);
     if(this.scenarioId==='speedbumps'){
       const damage=Math.round(this.bumpDamage);
+      this.integrity=100-damage;
       if(damage>0)this.visual.deform(damage);
       this.options.onResult({speed,damage,survival:Math.max(1,100-Math.round(damage*.9)),avoided,scenario:this.scenarioId,bumpsPassed:this.lastBumpIndex});
       return;
     }
     const impact=fictionalImpact(avoided?0:speed,VEHICLES[this.vehicleId],this.scenarioId);
+    this.integrity=avoided?100:100-impact.damage;
     if(!avoided)this.visual.deform(impact.damage);
     this.options.onResult({speed:avoided?0:speed,damage:impact.damage,survival:avoided?100:impact.survival,avoided,scenario:this.scenarioId,bumpsPassed:0});
   }
   private frame=()=>{
     this.raf=requestAnimationFrame(this.frame);
     const dt=Math.min(.07,this.clock.getDelta());
+    if(document.hidden){this.accumulator=0;return}
     const timeScale=this.phase==='crashed'?.32:1;
     this.accumulator+=dt*timeScale;
     let safety=0;
-    while(this.accumulator>=this.timestep&&safety++<5){this.step();this.accumulator-=this.timestep}
-    if(safety>=5)this.accumulator=0;
+    while(this.accumulator>=this.timestep&&safety++<10){this.step();this.accumulator-=this.timestep}
+    if(safety>=10)this.accumulator=0;
     const t=this.body?.translation();
     if(t&&this.visual){
       const q=this.body.rotation();
       this.visual.root.position.set(t.x,t.y,t.z);
       this.visual.root.quaternion.set(q.x,q.y,q.z,q.w);
-      this.boxPosition.set(t.x+(this.viewMode===0?2.3:13),t.y+(this.viewMode===0?5:5.5),t.z+(this.viewMode===0?-13:-7));
+      this.visual.updateWheels(this.driving.controller);
+      // Follow the heading with a level horizon; let the chassis visibly pitch and roll.
+      this.heading.set(0,0,1).applyQuaternion(this.visual.root.quaternion).setY(0);
+      if(this.heading.lengthSq()<.1)this.heading.set(0,0,1);else this.heading.normalize();
+      const side=this.viewMode===0?1.5:10,back=this.viewMode===0?11:5;
+      this.boxPosition.set(t.x-this.heading.x*back+this.heading.z*side,t.y+4,t.z-this.heading.z*back-this.heading.x*side);
       this.camera.position.lerp(this.boxPosition,Math.min(1,dt*3.8));
-      this.camera.lookAt(t.x,t.y+1,t.z+this.viewMode*3+6);
+      this.boxPosition.set(t.x+this.heading.x*5,t.y+.3,t.z+this.heading.z*5);
+      this.cameraTarget.lerp(this.boxPosition,1-Math.exp(-6*dt));
+      this.camera.lookAt(this.cameraTarget);
       if(performance.now()-this.lastTelemetry>90){
-        const speed=kmh(this.body.linvel().z);
-        this.options.onTelemetry({speed:Math.round(speed),distance:Math.max(0,Math.round(t.z)),integrity:this.scenarioId==='speedbumps'?Math.max(0,100-Math.round(this.bumpDamage)):this.phase==='crashed'?Math.max(0,100-Math.min(100,fictionalImpact(this.hitSpeed,VEHICLES[this.vehicleId],this.scenarioId).damage)):100,phase:this.phase,progress:progressFraction(t.z,this.scenarioId),bumpsPassed:this.lastBumpIndex});
+        const speed=kmh(this.phase==='ready'?0:this.driving.speed);
+        this.options.onTelemetry({speed:Math.round(speed),distance:Math.max(0,Math.round(t.z)),integrity:this.integrity,phase:this.phase,progress:progressFraction(t.z,this.scenarioId),bumpsPassed:this.lastBumpIndex});
         this.lastTelemetry=performance.now();
       }
     }

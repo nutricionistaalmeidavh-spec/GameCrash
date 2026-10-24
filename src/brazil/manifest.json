@@ -1,0 +1,777 @@
+{
+  "version": 1,
+  "units": "meters",
+  "coordinateSystem": "glTF Y-up",
+  "vehicleForward": "-Z",
+  "cars": {
+    "gol": {
+      "name": "Volkswagen Gol",
+      "file": "assets/brazil/cars/gol.glb",
+      "massKg": 1010,
+      "widthMeters": 1.66,
+      "lengthMeters": 3.9,
+      "heightMeters": 1.47,
+      "wheelbaseMeters": 2.47,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
+      "collider": {
+        "halfExtents": [
+          0.78,
+          0.632,
+          1.716
+        ],
+        "center": [
+          0,
+          0.779,
+          0
+        ]
+      }
+    },
+    "strada": {
+      "name": "Fiat Strada",
+      "file": "assets/brazil/cars/strada.glb",
+      "massKg": 1240,
+      "widthMeters": 1.73,
+      "lengthMeters": 4.47,
+      "heightMeters": 1.62,
+      "wheelbaseMeters": 2.74,
+      "approximateGameplayValues": true,
+      "kind": "pickup",
+      "collider": {
+        "halfExtents": [
+          0.813,
+          0.697,
+          1.967
+        ],
+        "center": [
+          0,
+          0.859,
+          0
+        ]
+      }
+    },
+    "palio": {
+      "name": "Fiat Palio",
+      "file": "assets/brazil/cars/palio.glb",
+      "massKg": 1000,
+      "widthMeters": 1.64,
+      "lengthMeters": 3.82,
+      "heightMeters": 1.44,
+      "wheelbaseMeters": 2.37,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
+      "collider": {
+        "halfExtents": [
+          0.771,
+          0.619,
+          1.681
+        ],
+        "center": [
+          0,
+          0.763,
+          0
+        ]
+      }
+    },
+    "onix": {
+      "name": "Chevrolet Onix",
+      "file": "assets/brazil/cars/onix.glb",
+      "massKg": 1100,
+      "widthMeters": 1.74,
+      "lengthMeters": 4.16,
+      "heightMeters": 1.47,
+      "wheelbaseMeters": 2.55,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
+      "collider": {
+        "halfExtents": [
+          0.818,
+          0.632,
+          1.83
+        ],
+        "center": [
+          0,
+          0.779,
+          0
+        ]
+      }
+    },
+    "uno": {
+      "name": "Fiat Uno",
+      "file": "assets/brazil/cars/uno.glb",
+      "massKg": 940,
+      "widthMeters": 1.64,
+      "lengthMeters": 3.77,
+      "heightMeters": 1.48,
+      "wheelbaseMeters": 2.38,
+      "approximateGameplayValues": true,
+      "kind": "boxy",
+      "collider": {
+        "halfExtents": [
+          0.771,
+          0.636,
+          1.659
+        ],
+        "center": [
+          0,
+          0.784,
+          0
+        ]
+      }
+    },
+    "hb20": {
+      "name": "Hyundai HB20",
+      "file": "assets/brazil/cars/hb20.glb",
+      "massKg": 1070,
+      "widthMeters": 1.72,
+      "lengthMeters": 4.01,
+      "heightMeters": 1.47,
+      "wheelbaseMeters": 2.53,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
+      "collider": {
+        "halfExtents": [
+          0.808,
+          0.632,
+          1.764
+        ],
+        "center": [
+          0,
+          0.779,
+          0
+        ]
+      }
+    },
+    "fiesta": {
+      "name": "Ford Fiesta",
+      "file": "assets/brazil/cars/fiesta.glb",
+      "massKg": 1120,
+      "widthMeters": 1.72,
+      "lengthMeters": 3.97,
+      "heightMeters": 1.46,
+      "wheelbaseMeters": 2.49,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
+      "collider": {
+        "halfExtents": [
+          0.808,
+          0.628,
+          1.747
+        ],
+        "center": [
+          0,
+          0.774,
+          0
+        ]
+      }
+    },
+    "ka": {
+      "name": "Ford Ka",
+      "file": "assets/brazil/cars/ka.glb",
+      "massKg": 1030,
+      "widthMeters": 1.7,
+      "lengthMeters": 3.89,
+      "heightMeters": 1.53,
+      "wheelbaseMeters": 2.49,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
+      "collider": {
+        "halfExtents": [
+          0.799,
+          0.658,
+          1.712
+        ],
+        "center": [
+          0,
+          0.811,
+          0
+        ]
+      }
+    },
+    "fox": {
+      "name": "Volkswagen Fox",
+      "file": "assets/brazil/cars/fox.glb",
+      "massKg": 1040,
+      "widthMeters": 1.66,
+      "lengthMeters": 3.82,
+      "heightMeters": 1.54,
+      "wheelbaseMeters": 2.47,
+      "approximateGameplayValues": true,
+      "kind": "boxy",
+      "collider": {
+        "halfExtents": [
+          0.78,
+          0.662,
+          1.681
+        ],
+        "center": [
+          0,
+          0.816,
+          0
+        ]
+      }
+    },
+    "celta": {
+      "name": "Chevrolet Celta",
+      "file": "assets/brazil/cars/celta.glb",
+      "massKg": 920,
+      "widthMeters": 1.63,
+      "lengthMeters": 3.79,
+      "heightMeters": 1.43,
+      "wheelbaseMeters": 2.44,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
+      "collider": {
+        "halfExtents": [
+          0.766,
+          0.615,
+          1.668
+        ],
+        "center": [
+          0,
+          0.758,
+          0
+        ]
+      }
+    }
+  },
+  "maps": {
+    "brasilia-eixo-monumental": {
+      "file": "assets/brazil/maps/brasilia-eixo-monumental.glb",
+      "collisionMeshPrefix": "COLLIDER_",
+      "name": "Eixo Monumental - Brasilia",
+      "spawn": {
+        "position": [
+          -5,
+          0.85,
+          170
+        ],
+        "yawRad": 0
+      },
+      "route": [
+        [
+          -5,
+          0,
+          170
+        ],
+        [
+          -5,
+          0,
+          162
+        ],
+        [
+          -5,
+          0,
+          154
+        ],
+        [
+          -5,
+          0,
+          146
+        ],
+        [
+          -5,
+          0,
+          138
+        ],
+        [
+          -5,
+          0,
+          130
+        ],
+        [
+          -5,
+          0,
+          122
+        ],
+        [
+          -5,
+          0,
+          114
+        ],
+        [
+          -5,
+          0,
+          106
+        ],
+        [
+          -5,
+          0,
+          98
+        ],
+        [
+          -5,
+          0,
+          90
+        ],
+        [
+          -5,
+          0,
+          82
+        ],
+        [
+          -5,
+          0,
+          74
+        ],
+        [
+          -5,
+          0,
+          66
+        ],
+        [
+          -5,
+          0,
+          58
+        ],
+        [
+          -5,
+          0,
+          50
+        ],
+        [
+          -5,
+          0,
+          42
+        ],
+        [
+          -5,
+          0,
+          34
+        ],
+        [
+          -5,
+          0,
+          26
+        ],
+        [
+          -5,
+          0,
+          18
+        ],
+        [
+          -5,
+          0,
+          10
+        ],
+        [
+          -5,
+          0,
+          2
+        ],
+        [
+          -5,
+          0,
+          -6
+        ],
+        [
+          -5,
+          0,
+          -14
+        ],
+        [
+          -5,
+          0,
+          -22
+        ],
+        [
+          -5,
+          0,
+          -30
+        ],
+        [
+          -5,
+          0,
+          -38
+        ],
+        [
+          -5,
+          0,
+          -46
+        ],
+        [
+          -5,
+          0,
+          -54
+        ],
+        [
+          -5,
+          0,
+          -62
+        ],
+        [
+          -5,
+          0,
+          -70
+        ],
+        [
+          -5,
+          0,
+          -78
+        ],
+        [
+          -5,
+          0,
+          -86
+        ],
+        [
+          -5,
+          0,
+          -94
+        ],
+        [
+          -5,
+          0,
+          -102
+        ],
+        [
+          -5,
+          0,
+          -110
+        ],
+        [
+          -5,
+          0,
+          -118
+        ],
+        [
+          -5,
+          0,
+          -126
+        ],
+        [
+          -5,
+          0,
+          -134
+        ],
+        [
+          -5,
+          0,
+          -142
+        ],
+        [
+          -5,
+          0,
+          -150
+        ],
+        [
+          -5,
+          0,
+          -158
+        ],
+        [
+          -5,
+          0,
+          -166
+        ]
+      ],
+      "obstacles": [
+        [
+          -6,
+          0,
+          -18
+        ],
+        [
+          5,
+          0,
+          -80
+        ]
+      ],
+      "locationInspired": true,
+      "geographicallyExact": false
+    },
+    "imigrantes": {
+      "file": "assets/brazil/maps/imigrantes.glb",
+      "collisionMeshPrefix": "COLLIDER_",
+      "name": "Rodovia dos Imigrantes - SP",
+      "spawn": {
+        "position": [
+          0.0,
+          35.9,
+          168
+        ],
+        "yawRad": -0.19287707742610338
+      },
+      "route": [
+        [
+          0.0,
+          35.0,
+          168
+        ],
+        [
+          2.1483548811098903,
+          34.1,
+          157
+        ],
+        [
+          4.2272907993010795,
+          33.2,
+          146
+        ],
+        [
+          6.169631899837358,
+          32.3,
+          135
+        ],
+        [
+          7.912616063657677,
+          31.4,
+          124
+        ],
+        [
+          9.3999229155298,
+          30.5,
+          113
+        ],
+        [
+          10.58349368261937,
+          29.6,
+          102
+        ],
+        [
+          11.425084099086188,
+          28.7,
+          91
+        ],
+        [
+          11.897500178300238,
+          27.8,
+          80
+        ],
+        [
+          11.985476921646288,
+          26.9,
+          69
+        ],
+        [
+          11.686171570538344,
+          26.0,
+          58
+        ],
+        [
+          11.009255463381718,
+          25.1,
+          47
+        ],
+        [
+          9.976601529344197,
+          24.2,
+          36
+        ],
+        [
+          8.621577516829515,
+          23.299999999999997,
+          25
+        ],
+        [
+          6.987967794288982,
+          22.4,
+          14
+        ],
+        [
+          5.128558562805962,
+          21.5,
+          3
+        ],
+        [
+          3.1034321959333298,
+          20.6,
+          -8
+        ],
+        [
+          0.9780258211232294,
+          19.7,
+          -19
+        ],
+        [
+          -1.178983124941299,
+          18.8,
+          -30
+        ],
+        [
+          -3.297896043877488,
+          17.9,
+          -41
+        ],
+        [
+          -5.310245319538225,
+          17.0,
+          -52
+        ],
+        [
+          -7.151006685693167,
+          16.099999999999998,
+          -63
+        ],
+        [
+          -8.760700330071595,
+          15.2,
+          -74
+        ],
+        [
+          -10.087312842602334,
+          14.3,
+          -85
+        ],
+        [
+          -11.087977904678255,
+          13.399999999999999,
+          -96
+        ],
+        [
+          -11.730361411981164,
+          12.5,
+          -107
+        ],
+        [
+          -11.993706273927408,
+          11.599999999999998,
+          -118
+        ],
+        [
+          -11.86950312953244,
+          10.7,
+          -129
+        ],
+        [
+          -11.361765307111307,
+          9.8,
+          -140
+        ],
+        [
+          -10.486899143148268,
+          8.899999999999999,
+          -151
+        ],
+        [
+          -9.273173850671853,
+          8.0,
+          -162
+        ]
+      ],
+      "obstacles": [
+        [
+          8.987967794288982,
+          22.4,
+          14
+        ],
+        [
+          -9.087977904678255,
+          13.399999999999999,
+          -96
+        ]
+      ],
+      "locationInspired": true,
+      "geographicallyExact": false
+    },
+    "serra-do-rio-do-rastro": {
+      "file": "assets/brazil/maps/serra-do-rio-do-rastro.glb",
+      "collisionMeshPrefix": "COLLIDER_",
+      "name": "Serra do Rio do Rastro - SC",
+      "spawn": {
+        "position": [
+          0,
+          55.9,
+          170
+        ],
+        "yawRad": 0
+      },
+      "route": [
+        [
+          0,
+          55,
+          170
+        ],
+        [
+          0,
+          52,
+          135
+        ],
+        [
+          48,
+          49,
+          106
+        ],
+        [
+          66,
+          46,
+          76
+        ],
+        [
+          27,
+          43,
+          53
+        ],
+        [
+          -30,
+          40,
+          42
+        ],
+        [
+          -70,
+          37,
+          15
+        ],
+        [
+          -63,
+          34,
+          -23
+        ],
+        [
+          -20,
+          31,
+          -35
+        ],
+        [
+          42,
+          28,
+          -49
+        ],
+        [
+          74,
+          25,
+          -79
+        ],
+        [
+          40,
+          22,
+          -106
+        ],
+        [
+          -15,
+          19,
+          -111
+        ],
+        [
+          -57,
+          16,
+          -132
+        ],
+        [
+          -40,
+          13,
+          -154
+        ],
+        [
+          0,
+          10,
+          -169
+        ]
+      ],
+      "obstacles": [
+        [
+          -30,
+          40,
+          42
+        ],
+        [
+          -15,
+          19,
+          -111
+        ]
+      ],
+      "locationInspired": true,
+      "geographicallyExact": false
+    }
+  }
+}

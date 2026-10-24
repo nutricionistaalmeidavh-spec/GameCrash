@@ -52,6 +52,18 @@ Se a conta não permitir a configuração automática, em **Settings → Pages �
 
 Licença MIT.
 
+## Direção e física
+
+- Chassi livre com massa do veículo e quatro rodas por raycast, suspensão, amortecimento e aderência via Rapier.
+- Direção progressiva muda a orientação do carro; curvas, saltos e capotamentos não são anulados por reposicionamento a cada frame.
+- Freio atua nas rodas e tem prioridade sobre o acelerador. O limitador reduz o torque e freia progressivamente ao baixar o limite.
+- Física em passo fixo de 120 Hz e CCD no chassi; lombadas arredondadas compartilham a mesma geometria entre renderização e colisão.
+- Garagem recolhida durante a partida, direção à esquerda e pedais à direita, botões para reiniciar e voltar à seleção.
+- Dez modelos brasileiros com carrocerias e cabines moldadas, além dos três carros originais; rodas acompanham a suspensão e a direção.
+- Colisões usam a velocidade normal à superfície para o dano ficcional. A carroceria continua sendo uma deformação visual de um corpo rígido, não uma simulação soft-body.
+
+O GitHub Actions valida também trajetórias físicas com o Rapier real (apoio dos 13 carros, curva, frenagem, voo, lombadas e impacto a 600 km/h). Os testes de navegador usam o build de produção e verificam controles em retrato e paisagem. O jogo e seus recursos são servidos pelo Pages; a simulação interativa roda no dispositivo de cada jogador, sem servidor obrigatório.
+
 ## Controles atualizados
 
 A simulação começa parada. No celular, pressione e mantenha **ACELERAR** para avançar; solte para reduzir a velocidade. **FREAR** desacelera o carro e as setas controlam a direção. No desktop, use **W/↑** para acelerar e **S/↓/espaço** para frear.

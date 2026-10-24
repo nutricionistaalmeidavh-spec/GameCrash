@@ -25,8 +25,10 @@ def run():
         scene.export(MAPS/(slug+".glb"))
         manifest["maps"][slug]={"file":"assets/brazil/maps/"+slug+".glb",
              "collisionMeshPrefix":"COLLIDER_",**metadata}
-    (OUT/"manifest.json").write_text(json.dumps(manifest,ensure_ascii=False,indent=2)+"\n",
-         encoding="utf-8")
+    manifest_text=json.dumps(manifest,ensure_ascii=False,indent=2)+"\n"
+    (OUT/"manifest.json").write_text(manifest_text,encoding="utf-8")
+    # Vite dev serves public files by URL; source modules import the generated source copy.
+    (ROOT/"src"/"brazil"/"manifest.json").write_text(manifest_text,encoding="utf-8")
     print("Generated",len(manifest["cars"]),"vehicles and",
          len(manifest["maps"]),"landscapes in",OUT)
 

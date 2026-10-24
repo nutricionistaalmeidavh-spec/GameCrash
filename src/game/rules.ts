@@ -20,6 +20,7 @@ export interface VehicleSpec {
   resistance: number;
   size: [number, number, number];
   modelFile?:string;
+  wheelbase?:number;
 }
 export interface ScenarioSpec { id: ScenarioId; label: string; icon: string; subtitle: string; z: number }
 export const VEHICLES = {
@@ -34,7 +35,7 @@ export const VEHICLES = {
       color:paint[id]??0xd0d0d0,mass:car.massKg,
       acceleration:Math.round((10+(1300-car.massKg)/260)*10)/10,maxSpeed:215,
       resistance:Math.max(.68,Math.min(1.15,car.massKg/1200)),
-      size:[width,height,length],modelFile:car.file} satisfies VehicleSpec];
+      size:[width,height,length],modelFile:car.file,wheelbase:car.wheelbaseMeters} satisfies VehicleSpec];
   }))
 } as Record<VehicleId, VehicleSpec>;
 export const SCENARIOS: Record<ScenarioId,ScenarioSpec> = {
@@ -49,11 +50,6 @@ export const SPEEDBUMPS={count:120,firstZ:110,spacing:11,finishZ:1440} as const;
 export const clampSpeedLimit=(speed:number):number=>clamp(Number.isFinite(speed)?speed:MAX_SPEED_KMH,60,MAX_SPEED_KMH);
 export function countBumpsPassed(z:number):number {
   return clamp(Math.floor((z-SPEEDBUMPS.firstZ)/SPEEDBUMPS.spacing)+1,0,SPEEDBUMPS.count);
-}
-export function nextForwardVelocity(current:number,vehicle:VehicleSpec,throttle:boolean,brake:boolean,dt:number,speedLimitKmh:number):number {
-  const limit=clampSpeedLimit(speedLimitKmh)/3.6;
-  const acceleration=throttle?vehicle.acceleration*2.3:0; // Arcade turbo: full scale reachable on a long track.
-  return clamp(current+(brake?-27:acceleration-1.3)*dt,0,limit);
 }
 export function kmh(metresPerSecond:number):number {return Math.max(0,metresPerSecond*3.6);}
 export function fictionalImpact(speedKmh:number,vehicle:VehicleSpec,scenario:ScenarioId){

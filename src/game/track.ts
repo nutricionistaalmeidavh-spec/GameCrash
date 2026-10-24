@@ -2,6 +2,7 @@ import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import type {ScenarioId} from './rules';
 import {SCENARIOS,SPEEDBUMPS} from './rules';
+import {bumpShape} from './bump';
 
 const mat=(color:number,roughness=1,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
 function addBox(root:THREE.Group,size:[number,number,number],pos:[number,number,number],material:THREE.Material){
@@ -22,8 +23,14 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
     addBox(root,[.20,.035,roadLength-20],[side*9,.095,roadCenter],stripe).castShadow=false;
     addBox(root,[.14,.025,roadLength-20],[side*6.1,.1,roadCenter],yellow).castShadow=false;
   }
-  for(let z=-30;z<roadEnd;z+=13)for(const x of [-3.05,3.05]) addBox(root,[.15,.025,6.1],[x,.10,z],stripe).castShadow=false;
-  world.createCollider(RAPIER.ColliderDesc.cuboid(260,.3,roadLength/2).setFriction(1),world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,-.33,roadCenter)));
+  const dashCount=Math.ceil((roadEnd+30)/13)*2;
+  const dashes=new THREE.InstancedMesh(new THREE.BoxGeometry(.15,.025,6.1),stripe,dashCount);
+  const dashTransform=new THREE.Object3D();let dashIndex=0;
+  for(let z=-30;z<roadEnd;z+=13)for(const x of [-3.05,3.05]){
+    dashTransform.position.set(x,.10,z);dashTransform.updateMatrix();dashes.setMatrixAt(dashIndex++,dashTransform.matrix);
+  }
+  root.add(dashes);
+  world.createCollider(RAPIER.ColliderDesc.cuboid(260,.3,roadLength/2).setFriction(1),world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,-.225,roadCenter)));
   const trunk=mat(0x604735),leaf=mat(0x2b5643),leafAlt=mat(0x3b6b49);
   const trunkGeo=new THREE.CylinderGeometry(.17,.26,2.5,5),canopyGeo=new THREE.ConeGeometry(2.2,6.2,6);
   const trees=scenario==='speedbumps'?202:90;
@@ -79,19 +86,23 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
   }
   if(scenario==='speedbumps'){
     // Instancing shares two meshes for all 120 physical bumps, keeping WebKit draw calls low.
-    const bumpGeo=new THREE.BoxGeometry(18,.20,1.35);
-    const paintGeo=new THREE.BoxGeometry(18,.027,.45);
+    const shape=bumpShape();
+    const bumpGeo=new THREE.BufferGeometry();
+    bumpGeo.setAttribute('position',new THREE.BufferAttribute(shape.vertices,3));bumpGeo.setIndex(shape.indices);bumpGeo.computeVertexNormals();
+    const paintGeo=new THREE.BoxGeometry(18,.012,.35);
     const bumps=new THREE.InstancedMesh(bumpGeo,block,SPEEDBUMPS.count);
     const markings=new THREE.InstancedMesh(paintGeo,paint,SPEEDBUMPS.count);
     const instance=new THREE.Object3D();
     for(let i=0;i<SPEEDBUMPS.count;i++){
       const zBump=SPEEDBUMPS.firstZ+i*SPEEDBUMPS.spacing;
-      instance.position.set(0,.20,zBump);instance.updateMatrix();
+      instance.position.set(0,0,zBump);instance.updateMatrix();
       bumps.setMatrixAt(i,instance.matrix);
-      instance.position.set(0,.315,zBump);instance.updateMatrix();
+      instance.position.set(0,.283,zBump);instance.updateMatrix();
       markings.setMatrixAt(i,instance.matrix);
-      const body=world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,.20,zBump));
-      world.createCollider(RAPIER.ColliderDesc.cuboid(9,.10,.675).setFriction(.9).setRestitution(.03),body);
+      const body=world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,0,zBump));
+      const collider=RAPIER.ColliderDesc.convexHull(shape.vertices);
+      if(!collider)throw new Error('Geometria inválida da lombada');
+      world.createCollider(collider.setFriction(.9).setRestitution(.03),body);
     }
     bumps.instanceMatrix.needsUpdate=true;markings.instanceMatrix.needsUpdate=true;
     bumps.receiveShadow=true;root.add(bumps,markings);
