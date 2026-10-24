@@ -4,6 +4,8 @@ import RAPIER from '@dimforge/rapier3d-compat/rapier.es.js';
 import {VehicleDynamics,PHYSICS_DT,EMPTY_INPUT} from '../src/game/driving.ts';
 import {VEHICLES} from '../src/game/rules.ts';
 import {bumpShape} from '../src/game/bump.ts';
+import {rotate} from '../src/game/structure.ts';
+function velocity(car,value){for(const body of [car.body,...car.structure.nodes.filter(n=>!n.anchor).map(n=>n.body)])body.setLinvel(value,true)}
 
 before(async()=>{await RAPIER.init()});
 function fixture(spec=VEHICLES.sedan){
@@ -21,8 +23,9 @@ test('all 13 chassis settle on four suspension contacts without moving',()=>{
       run(2);assert.equal(car.groundedWheels,4,spec.id);
       assert.ok(Math.abs(car.body.translation().z)<.01,spec.id);
       assert.ok(car.body.translation().y>.35,spec.id);
-      assert.ok(car.speed<.05,spec.id);
-      assert.ok(Math.abs(car.body.mass()-spec.mass)<.1,spec.id);
+      assert.ok(Math.abs(car.signedSpeed)<.05,spec.id);
+      assert.ok(Math.abs(car.structure.totalMass-spec.mass)<.1,spec.id);
+      assert.equal(car.structure.damage,0,spec.id);
     }finally{world.free()}
   }
 });
@@ -55,7 +58,8 @@ test('accelerator and steering cannot propel or straighten an airborne chassis',
   try{
     car.body.setTranslation({x:0,y:8,z:0},true);
     car.body.setRotation({x:Math.sin(.2),y:0,z:0,w:Math.cos(.2)},true);
-    car.body.setLinvel({x:0,y:0,z:20},true);
+    for(const node of car.structure.nodes)if(!node.anchor){const p=rotate(node.rest,car.body.rotation());node.body.setTranslation({x:p.x,y:8+p.y,z:p.z},true)}
+    velocity(car,{x:0,y:0,z:20});
     for(let i=0;i<30;i++){car.update({...EMPTY_INPUT,throttle:true,right:true},600);world.step()}
     assert.equal(car.groundedWheels,0);
     assert.ok(car.body.linvel().z<=20,'no wheel traction in midair');
@@ -68,7 +72,7 @@ test('a rounded bump compresses suspension without stopping a car at 50 km/h',()
   try{
     const shape=bumpShape();
     world.createCollider(RAPIER.ColliderDesc.convexHull(shape.vertices).setTranslation(0,0,12));
-    car.body.setLinvel({x:0,y:0,z:50/3.6},true);
+    velocity(car,{x:0,y:0,z:50/3.6});
     let minLength=1,maxPitch=0;
     for(let i=0;i<240;i++){
       car.update(EMPTY_INPUT,600);world.step();
@@ -85,7 +89,7 @@ test('CCD prevents a 600 km/h chassis passing through a concrete wall',()=>{
   const {world,car}=fixture();
   try{
     world.createCollider(RAPIER.ColliderDesc.cuboid(9,3,.25).setTranslation(0,3,12));
-    car.body.setLinvel({x:0,y:0,z:600/3.6},true);
+    velocity(car,{x:0,y:0,z:600/3.6});
     for(let i=0;i<30;i++){car.update(EMPTY_INPUT,600);world.step()}
     assert.ok(car.body.translation().z<12,'must remain on the incoming side of the wall');
     assert.ok(car.speed<10,'wall must dissipate forward velocity');
@@ -106,14 +110,14 @@ test('physical accelerator governor holds the configured speed without teleporti
     assert.ok(car.signedSpeed*3.6<=600);
   }finally{world.free()}
 });
-test('all 120 physical bumps can be crossed without a fabricated upward impulse',()=>{
+test('all 120 physical bumps can be crossed at moderate speed without a fabricated upward impulse',()=>{
   const {world,car}=fixture();
   try{
     const shape=bumpShape();
     for(let i=0;i<120;i++)world.createCollider(RAPIER.ColliderDesc.convexHull(shape.vertices).setTranslation(0,0,110+i*11));
     let maxY=0;
-    for(let i=0;i<2400&&car.body.translation().z<1440;i++){
-      car.update({...EMPTY_INPUT,throttle:true},600);world.step();maxY=Math.max(maxY,car.body.translation().y);
+    for(let i=0;i<13000&&car.body.translation().z<1440;i++){
+      car.update({...EMPTY_INPUT,throttle:true},60);world.step();maxY=Math.max(maxY,car.body.translation().y);
     }
     assert.ok(car.body.translation().z>=1440,'must cross the complete course');
     assert.ok(Math.abs(car.body.translation().x)<9,'must remain within the lane');

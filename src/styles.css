@@ -136,3 +136,13 @@ body[data-phase='running'] .controls-float{visibility:visible}
   .controls-float{bottom:calc(12px + env(safe-area-inset-bottom))}
   .drive-btn{height:60px}
 }
+.inspection-tools{display:none;position:absolute;bottom:calc(18px + env(safe-area-inset-bottom));left:14px;right:14px;align-items:center;justify-content:flex-end;gap:8px}
+body[data-phase='crashed'] .inspection-tools{display:flex}
+.inspection-tools span{margin-right:auto;color:#d5e1e5;font-size:11px;text-shadow:0 1px 4px #000}
+.inspection-tools button:disabled{opacity:.4;cursor:default}
+.inspect-btn{width:100%;border:1px solid #75818a;border-radius:7px;background:#1d2c38;color:#e9f0f5;font-size:11px;font-weight:800;padding:12px;margin-top:10px}
+.result-card{max-height:92dvh;overflow-y:auto;overscroll-behavior:contain}
+.result-metrics{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));row-gap:15px}
+.result-metrics:has(#result-bumps:not(.hidden)){display:grid}
+#result-bumps{grid-column:1/-1}
+@media(max-width:700px){.inspection-tools{flex-wrap:wrap;justify-content:center}.inspection-tools span{flex-basis:100%;text-align:center;margin-right:0}.result-card{padding:18px}.result-emblem{font-size:40px}.survival{font-size:76px}.result-metrics b{font-size:21px}}

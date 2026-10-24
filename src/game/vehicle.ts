@@ -1,20 +1,21 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
 import type {VehicleSpec} from './rules';
-import {clamp} from './rules';
-import {wheelLayout} from './driving';
-import type {DynamicRayCastVehicleController} from '@dimforge/rapier3d-compat';
+import {wheelLayout} from './driving.ts';
+import type {VehicleDynamics} from './driving';
+import type {VehicleStructure,PhysicalFragment} from './structure';
 
 export interface VehicleVisual {
   root:THREE.Group;
   wheels:THREE.Group[];
   panels:THREE.Mesh<THREE.BufferGeometry,THREE.MeshStandardMaterial>[];
   bodyLength:number;
-  spin(amount:number):void;
-  updateWheels(controller:DynamicRayCastVehicleController):void;
+  debrisRoot:THREE.Group;
+  setStructure(structure:VehicleStructure):void;
+  updatePhysics(driving:VehicleDynamics):void;
   addDamageMeshes(asset:THREE.Group):void;
-  deform(damage:number):void;
 }
+interface SkinBinding {mesh:THREE.Mesh;rest:Float32Array;indices:Uint8Array;weights:Float32Array;toLocal:THREE.Matrix4;active:boolean}
 function shell(parent:THREE.Group,name:string,profiles:Array<[number,number,number,number]>,mat:THREE.MeshStandardMaterial){
   const points:number[]=[],indices:number[]=[];
   for(const [z,width,low,high] of profiles)points.push(-width,low,z,width,low,z,width,high,z,-width,high,z);
@@ -83,43 +84,102 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
     pivot.add(new THREE.Mesh(mergeGeometries(spokes),chrome));spokes.forEach(g=>g.dispose());
     root.add(pivot);wheels.push(pivot);
   }
-  const restPositions=new Map<THREE.Mesh,Float32Array>();
-  function remember(mesh:THREE.Mesh){restPositions.set(mesh,new Float32Array(mesh.geometry.getAttribute('position').array))}
-  panels.forEach(remember);
+  let structure:VehicleStructure|undefined;
+  const bindings:SkinBinding[]=[],debrisRoot=new THREE.Group(),released=new Map<string,{group:THREE.Group;fragment:PhysicalFragment}>();
+  const detachableParts=[
+    {id:'hood',z:l*.31,match:/^hood/},
+    {id:'front-bumper',z:l*.49,match:/^(front.grille|headlamp|front_light|license_plate_front|bumper)/},
+    {id:'rear-bumper',z:-l*.49,match:/^(rear.bumper|brake.lamp|rear_light|license_plate_rear|bumper)/}
+  ];
+  const visible=(mesh:THREE.Object3D)=>{let p:THREE.Object3D|null=mesh;while(p){if(!p.visible)return false;p=p.parent}return true};
+  function remember(mesh:THREE.Mesh){
+    if(!structure||bindings.some(b=>b.mesh===mesh))return;
+    root.updateMatrixWorld(true);
+    const original=mesh.geometry;
+    mesh.geometry=original.index?original.toNonIndexed():original.clone();original.dispose();
+    const toRoot=new THREE.Matrix4().copy(root.matrixWorld).invert().multiply(mesh.matrixWorld);
+    const p=mesh.geometry.getAttribute('position'),rest=new Float32Array(p.count*3),indices=new Uint8Array(p.count*4),weights=new Float32Array(p.count*4),v=new THREE.Vector3();
+    for(let i=0;i<p.count;i++){
+      v.fromBufferAttribute(p,i).applyMatrix4(toRoot);rest.set([v.x,v.y,v.z],i*3);
+      const nearest=structure.nodes.map((n,index)=>({index,d:(n.rest.x-v.x)**2+(n.rest.y-v.y)**2+(n.rest.z-v.z)**2})).sort((a,b)=>a.d-b.d).slice(0,4);
+      const sum=nearest.reduce((s,n)=>s+1/(.0001+n.d*n.d),0);
+      nearest.forEach((n,j)=>{indices[i*4+j]=n.index;weights[i*4+j]=(1/(.0001+n.d*n.d))/sum});
+    }
+    bindings.push({mesh,rest,indices,weights,toLocal:toRoot.clone().invert(),active:true});
+  }
+  function followFragment(id:string,fragment:PhysicalFragment,objects:THREE.Object3D[]){
+    if(released.has(id))return;
+    const group=new THREE.Group(),p=fragment.body.translation(),q=fragment.body.rotation();
+    group.position.set(p.x,p.y,p.z);group.quaternion.set(q.x,q.y,q.z,q.w);debrisRoot.add(group);group.updateMatrixWorld(true);
+    root.updateMatrixWorld(true);
+    for(const obj of objects){group.attach(obj);for(const b of bindings)if(b.mesh===obj)b.active=false}
+    released.set(id,{group,fragment});
+  }
   return {
-    root,wheels,panels,bodyLength:l,
-    spin(distance:number){for(const wheel of wheels)wheel.rotation.x+=distance/wheelRadius},
-    updateWheels(controller){
+    root,wheels,panels,bodyLength:l,debrisRoot,
+    setStructure(value){
+      structure=value;
+      for(const child of root.children)if(!wheels.includes(child as THREE.Group))child.traverse(obj=>{if(obj instanceof THREE.Mesh)remember(obj)});
+    },
+    updatePhysics(driving){
+      if(!structure)return;
+      const controller=driving.controller;
       for(let i=0;i<4;i++){
-        wheels[i].position.y=layout.y+layout.rest-(controller.wheelSuspensionLength(i)??layout.rest);
+        const fragment=driving.wheelFragments[i];
+        if(fragment){followFragment('wheel-'+i,fragment,[wheels[i]]);continue}
+        const point=controller.wheelChassisConnectionPointCs(i)!;
+        wheels[i].position.set(point.x,point.y-(controller.wheelSuspensionLength(i)??layout.rest),point.z);
         wheels[i].rotation.set(controller.wheelRotation(i)??0,controller.wheelSteering(i)??0,0,'YXZ');
+      }
+      const offsets=structure.nodes.map(n=>{const p=structure!.localPosition(n);return {x:p.x-n.rest.x,y:p.y-n.rest.y,z:p.z-n.rest.z}});
+      const point=new THREE.Vector3();
+      for(const binding of bindings){
+        if(!binding.active||!visible(binding.mesh))continue;
+        const {mesh,rest,indices,weights,toLocal}=binding,pos=mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
+        const unsupported=new Uint8Array(pos.count);
+        for(let i=0;i<pos.count;i++){
+          let dx=0,dy=0,dz=0,total=0;
+          for(let j=0;j<4;j++){
+            const n=indices[i*4+j],w=weights[i*4+j];if(structure.nodes[n].detached)continue;
+            dx+=offsets[n].x*w;dy+=offsets[n].y*w;dz+=offsets[n].z*w;total+=w;
+          }
+          point.set(rest[i*3]+dx/Math.max(.001,total),rest[i*3+1]+dy/Math.max(.001,total),rest[i*3+2]+dz/Math.max(.001,total)).applyMatrix4(toLocal);
+          pos.setXYZ(i,point.x,point.y,point.z);
+          unsupported[i]=total<.02?1:0;
+        }
+        // Non-indexed faces can tear without pulling the rest of a panel into long spikes.
+        for(let i=0;i<pos.count;i+=3){
+          let torn=Boolean(unsupported[i]||unsupported[i+1]||unsupported[i+2]);
+          if(!torn&&structure.brokenBeams>0)for(let j=1;j<3;j++){
+            const current=Math.hypot(pos.getX(i)-pos.getX(i+j),pos.getY(i)-pos.getY(i+j),pos.getZ(i)-pos.getZ(i+j));
+            const original=Math.hypot(rest[i*3]-rest[(i+j)*3],rest[i*3+1]-rest[(i+j)*3+1],rest[i*3+2]-rest[(i+j)*3+2]);
+            if(current>original*2+.3)torn=true;
+          }
+          if(torn)for(let j=1;j<3;j++)pos.setXYZ(i+j,pos.getX(i),pos.getY(i),pos.getZ(i));
+        }
+        pos.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingSphere();mesh.geometry.computeBoundingBox();
+      }
+      root.updateMatrixWorld(true);
+      if(structure.brokenBeams>0)for(const part of detachableParts){
+        const fragment=structure.fragments.find(f=>f.id===part.id);
+        if(released.has(part.id)||!fragment)continue;
+        const selected=bindings.filter(b=>b.active&&visible(b.mesh)&&part.match.test(b.mesh.name)&&Math.sign(b.rest[2])===Math.sign(part.z));
+        if(!selected.length)continue;
+        followFragment(part.id,fragment,selected.map(b=>b.mesh));
+      }
+      for(const {group,fragment} of released.values()){
+        const p=fragment.body.translation(),q=fragment.body.rotation();group.position.set(p.x,p.y,p.z);group.quaternion.set(q.x,q.y,q.z,q.w);
       }
     },
     addDamageMeshes(asset){
       asset.traverse(obj=>{
         if(obj instanceof THREE.Mesh&&!obj.name.startsWith('wheel_')){
-          // Each panel owns its mutable vertex data.
-          const original=obj.geometry;obj.geometry=original.clone();original.dispose();remember(obj);
+          remember(obj);
+          // A model that arrives after a crash must not restore a detached panel.
+          const binding=bindings.find(b=>b.mesh===obj);
+          if(binding)for(const part of detachableParts)if(structure?.fragments.some(f=>f.id===part.id)&&part.match.test(obj.name)&&Math.sign(binding.rest[2])===Math.sign(part.z))obj.visible=false;
         }
       });
-    },
-    deform(damage:number){
-      const crush=clamp(damage/100,0,1);
-      root.updateMatrixWorld(true);
-      const toRoot=new THREE.Matrix4(),toLocal=new THREE.Matrix4(),point=new THREE.Vector3();
-      for(const [mesh,original] of restPositions){
-        toRoot.copy(root.matrixWorld).invert().multiply(mesh.matrixWorld);toLocal.copy(toRoot).invert();
-        const pos=mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
-        for(let i=0;i<pos.count;i++){
-          point.set(original[i*3],original[i*3+1],original[i*3+2]).applyMatrix4(toRoot);
-          const factor=clamp((point.z-l*.08)/(l*.42),0,1);
-          const wrinkle=Math.sin(i*4.77+mesh.position.z*3.51)*.06;
-          point.x+=wrinkle*crush*factor;point.y-=crush*.16*factor;point.z-=crush*.95*factor;
-          point.applyMatrix4(toLocal);pos.setXYZ(i,point.x,point.y,point.z);
-        }
-        pos.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingSphere();
-      }
-      if(crush>.67){wheels[1].position.x-=.29*crush;wheels[3].position.x+=.3*crush;wheels[1].rotation.z=.35*crush;}
     }
   };
 }
