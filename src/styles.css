@@ -55,3 +55,28 @@ button{font:inherit;cursor:pointer;-webkit-tap-highlight-color:transparent}butto
 @media(max-width:380px){.bottom-help{display:none}.bottom-actions{justify-content:flex-end}.pick-text b{font-size:11px}.car-icon{width:26px}}
 @media(max-height:730px) and (min-width:701px){.hud{top:112px}.speed-line strong{font-size:65px}.bottom-panel{padding-top:12px;padding-bottom:12px}.pick{min-height:56px}.scenario-label{margin-top:8px}}
 @media(prefers-reduced-motion:reduce){*,*:before,*:after{animation-duration:.01ms!important;transition-duration:.01ms!important}}
+
+
+/* Brasil catalog: compact vertical grid, no horizontal carousel */
+#vehicles{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));max-width:none;max-height:134px;overflow-y:auto;overscroll-behavior:contain;padding-right:3px}
+#vehicles .pick{min-height:49px;gap:5px;padding:7px 6px}
+#vehicles .car-icon{display:none}
+#vehicles .pick-text b{font:800 13px/1.1 Impact,'Arial Narrow',sans-serif;white-space:normal}
+#vehicles .pick-text small{font-size:7px;white-space:normal}
+.scenery-label{margin-top:11px}
+.sceneries{max-width:100%;display:grid;grid-template-columns:repeat(4,minmax(0,1fr))}
+.sceneries .pick{min-height:42px;padding:7px 10px;justify-content:center}
+.sceneries .pick-text b{font-size:14px;white-space:normal}
+@media(max-width:1050px){#vehicles{grid-template-columns:repeat(5,minmax(0,1fr));max-height:112px}}
+@media(max-width:700px){
+  #vehicles{grid-template-columns:repeat(3,minmax(0,1fr));max-height:125px}
+  #vehicles .pick{min-height:36px;padding:4px 6px}
+  #vehicles .pick-text b{font-size:11px}
+  #vehicles .pick-text small{font-size:6px}
+  .scenery-label{margin-top:6px}
+  .sceneries{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .sceneries .pick{min-height:30px;padding:4px 6px}
+  .sceneries .pick-text b{font-size:11px}
+  .controls-float{bottom:calc(362px + env(safe-area-inset-bottom))}
+}
+@media(max-height:750px) and (max-width:700px){#vehicles{max-height:76px}.sceneries .pick{min-height:25px}.controls-float{bottom:calc(308px + env(safe-area-inset-bottom))}}
