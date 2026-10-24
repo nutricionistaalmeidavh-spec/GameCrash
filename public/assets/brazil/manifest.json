@@ -1,224 +1,235 @@
 {
   "version": 1,
   "units": "meters",
+  "coordinateSystem": "glTF Y-up",
   "vehicleForward": "-Z",
   "cars": {
     "gol": {
       "name": "Volkswagen Gol",
-      "filename": "cars/gol.glb",
-      "kind": "hatch",
-      "massKg": 1000,
-      "widthMeters": 1.65,
+      "file": "assets/brazil/cars/gol.glb",
+      "massKg": 1010,
+      "widthMeters": 1.66,
       "lengthMeters": 3.9,
-      "heightMeters": 1.45,
-      "wheelbaseMeters": 2.45,
+      "heightMeters": 1.47,
+      "wheelbaseMeters": 2.47,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
       "collider": {
         "halfExtents": [
-          0.7919999999999999,
-          0.58,
+          0.78,
+          0.632,
           1.716
         ],
         "center": [
           0,
-          0.7685,
+          0.779,
           0
         ]
       }
     },
     "strada": {
       "name": "Fiat Strada",
-      "filename": "cars/strada.glb",
-      "kind": "pickup",
-      "massKg": 1230,
+      "file": "assets/brazil/cars/strada.glb",
+      "massKg": 1240,
       "widthMeters": 1.73,
-      "lengthMeters": 4.45,
-      "heightMeters": 1.58,
-      "wheelbaseMeters": 2.73,
+      "lengthMeters": 4.47,
+      "heightMeters": 1.62,
+      "wheelbaseMeters": 2.74,
+      "approximateGameplayValues": true,
+      "kind": "pickup",
       "collider": {
         "halfExtents": [
-          0.8303999999999999,
-          0.6320000000000001,
-          1.9580000000000002
+          0.813,
+          0.697,
+          1.967
         ],
         "center": [
           0,
-          0.8374,
+          0.859,
           0
         ]
       }
     },
     "palio": {
       "name": "Fiat Palio",
-      "filename": "cars/palio.glb",
-      "kind": "hatch",
+      "file": "assets/brazil/cars/palio.glb",
       "massKg": 1000,
       "widthMeters": 1.64,
       "lengthMeters": 3.82,
-      "heightMeters": 1.47,
+      "heightMeters": 1.44,
       "wheelbaseMeters": 2.37,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
       "collider": {
         "halfExtents": [
-          0.7871999999999999,
-          0.588,
-          1.6807999999999998
+          0.771,
+          0.619,
+          1.681
         ],
         "center": [
           0,
-          0.7791,
+          0.763,
           0
         ]
       }
     },
     "onix": {
       "name": "Chevrolet Onix",
-      "filename": "cars/onix.glb",
-      "kind": "hatch",
-      "massKg": 1090,
-      "widthMeters": 1.75,
-      "lengthMeters": 4.15,
+      "file": "assets/brazil/cars/onix.glb",
+      "massKg": 1100,
+      "widthMeters": 1.74,
+      "lengthMeters": 4.16,
       "heightMeters": 1.47,
       "wheelbaseMeters": 2.55,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
       "collider": {
         "halfExtents": [
-          0.84,
-          0.588,
-          1.826
+          0.818,
+          0.632,
+          1.83
         ],
         "center": [
           0,
-          0.7791,
+          0.779,
           0
         ]
       }
     },
     "uno": {
       "name": "Fiat Uno",
-      "filename": "cars/uno.glb",
-      "kind": "boxy",
-      "massKg": 930,
-      "widthMeters": 1.65,
-      "lengthMeters": 3.76,
+      "file": "assets/brazil/cars/uno.glb",
+      "massKg": 940,
+      "widthMeters": 1.64,
+      "lengthMeters": 3.77,
       "heightMeters": 1.48,
-      "wheelbaseMeters": 2.37,
+      "wheelbaseMeters": 2.38,
+      "approximateGameplayValues": true,
+      "kind": "boxy",
       "collider": {
         "halfExtents": [
-          0.7919999999999999,
-          0.592,
-          1.6543999999999999
+          0.771,
+          0.636,
+          1.659
         ],
         "center": [
           0,
-          0.7844,
+          0.784,
           0
         ]
       }
     },
     "hb20": {
       "name": "Hyundai HB20",
-      "filename": "cars/hb20.glb",
-      "kind": "hatch",
-      "massKg": 1080,
+      "file": "assets/brazil/cars/hb20.glb",
+      "massKg": 1070,
       "widthMeters": 1.72,
       "lengthMeters": 4.01,
-      "heightMeters": 1.48,
+      "heightMeters": 1.47,
       "wheelbaseMeters": 2.53,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
       "collider": {
         "halfExtents": [
-          0.8256,
-          0.592,
-          1.7644
+          0.808,
+          0.632,
+          1.764
         ],
         "center": [
           0,
-          0.7844,
+          0.779,
           0
         ]
       }
     },
     "fiesta": {
       "name": "Ford Fiesta",
-      "filename": "cars/fiesta.glb",
-      "kind": "hatch",
-      "massKg": 1130,
+      "file": "assets/brazil/cars/fiesta.glb",
+      "massKg": 1120,
       "widthMeters": 1.72,
       "lengthMeters": 3.97,
-      "heightMeters": 1.47,
+      "heightMeters": 1.46,
       "wheelbaseMeters": 2.49,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
       "collider": {
         "halfExtents": [
-          0.8256,
-          0.588,
-          1.7468000000000001
+          0.808,
+          0.628,
+          1.747
         ],
         "center": [
           0,
-          0.7791,
+          0.774,
           0
         ]
       }
     },
     "ka": {
       "name": "Ford Ka",
-      "filename": "cars/ka.glb",
-      "kind": "hatch",
+      "file": "assets/brazil/cars/ka.glb",
       "massKg": 1030,
       "widthMeters": 1.7,
       "lengthMeters": 3.89,
-      "heightMeters": 1.51,
+      "heightMeters": 1.53,
       "wheelbaseMeters": 2.49,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
       "collider": {
         "halfExtents": [
-          0.816,
-          0.6040000000000001,
-          1.7116
+          0.799,
+          0.658,
+          1.712
         ],
         "center": [
           0,
-          0.8003,
+          0.811,
           0
         ]
       }
     },
     "fox": {
       "name": "Volkswagen Fox",
-      "filename": "cars/fox.glb",
-      "kind": "boxy",
+      "file": "assets/brazil/cars/fox.glb",
       "massKg": 1040,
       "widthMeters": 1.66,
-      "lengthMeters": 3.83,
-      "heightMeters": 1.55,
+      "lengthMeters": 3.82,
+      "heightMeters": 1.54,
       "wheelbaseMeters": 2.47,
+      "approximateGameplayValues": true,
+      "kind": "boxy",
       "collider": {
         "halfExtents": [
-          0.7968,
-          0.6200000000000001,
-          1.6852
+          0.78,
+          0.662,
+          1.681
         ],
         "center": [
           0,
-          0.8215000000000001,
+          0.816,
           0
         ]
       }
     },
     "celta": {
       "name": "Chevrolet Celta",
-      "filename": "cars/celta.glb",
-      "kind": "hatch",
+      "file": "assets/brazil/cars/celta.glb",
       "massKg": 920,
       "widthMeters": 1.63,
-      "lengthMeters": 3.78,
-      "heightMeters": 1.45,
+      "lengthMeters": 3.79,
+      "heightMeters": 1.43,
       "wheelbaseMeters": 2.44,
+      "approximateGameplayValues": true,
+      "kind": "hatch",
       "collider": {
         "halfExtents": [
-          0.7823999999999999,
-          0.58,
-          1.6632
+          0.766,
+          0.615,
+          1.668
         ],
         "center": [
           0,
-          0.7685,
+          0.758,
           0
         ]
       }
@@ -226,15 +237,14 @@
   },
   "maps": {
     "brasilia-eixo-monumental": {
-      "name": "Eixo Monumental, Brasilia",
-      "filename": "maps/brasilia-eixo-monumental.glb",
-      "stylized": true,
-      "notGeographicallyExact": true,
+      "file": "assets/brazil/maps/brasilia-eixo-monumental.glb",
+      "collisionMeshPrefix": "COLLIDER_",
+      "name": "Eixo Monumental - Brasilia",
       "spawn": {
         "position": [
           -5,
-          0.8,
-          153
+          0.85,
+          170
         ],
         "yawRad": 0
       },
@@ -242,374 +252,426 @@
         [
           -5,
           0,
-          153
+          170
         ],
         [
           -5,
           0,
-          143
+          162
         ],
         [
           -5,
           0,
-          133
+          154
         ],
         [
           -5,
           0,
-          123
+          146
         ],
         [
           -5,
           0,
-          113
+          138
         ],
         [
           -5,
           0,
-          103
+          130
         ],
         [
           -5,
           0,
-          93
+          122
         ],
         [
           -5,
           0,
-          83
+          114
         ],
         [
           -5,
           0,
-          73
+          106
         ],
         [
           -5,
           0,
-          63
+          98
         ],
         [
           -5,
           0,
-          53
+          90
         ],
         [
           -5,
           0,
-          43
+          82
         ],
         [
           -5,
           0,
-          33
+          74
         ],
         [
           -5,
           0,
-          23
+          66
         ],
         [
           -5,
           0,
-          13
+          58
         ],
         [
           -5,
           0,
-          3
+          50
         ],
         [
           -5,
           0,
-          -7
+          42
         ],
         [
           -5,
           0,
-          -17
+          34
         ],
         [
           -5,
           0,
-          -27
+          26
         ],
         [
           -5,
           0,
-          -37
+          18
         ],
         [
           -5,
           0,
-          -47
+          10
         ],
         [
           -5,
           0,
-          -57
+          2
         ],
         [
           -5,
           0,
-          -67
+          -6
         ],
         [
           -5,
           0,
-          -77
+          -14
         ],
         [
           -5,
           0,
-          -87
+          -22
         ],
         [
           -5,
           0,
-          -97
+          -30
         ],
         [
           -5,
           0,
-          -107
+          -38
         ],
         [
           -5,
           0,
-          -117
+          -46
         ],
         [
           -5,
           0,
-          -127
+          -54
         ],
         [
           -5,
           0,
-          -137
+          -62
         ],
         [
           -5,
           0,
-          -147
+          -70
+        ],
+        [
+          -5,
+          0,
+          -78
+        ],
+        [
+          -5,
+          0,
+          -86
+        ],
+        [
+          -5,
+          0,
+          -94
+        ],
+        [
+          -5,
+          0,
+          -102
+        ],
+        [
+          -5,
+          0,
+          -110
+        ],
+        [
+          -5,
+          0,
+          -118
+        ],
+        [
+          -5,
+          0,
+          -126
+        ],
+        [
+          -5,
+          0,
+          -134
+        ],
+        [
+          -5,
+          0,
+          -142
+        ],
+        [
+          -5,
+          0,
+          -150
+        ],
+        [
+          -5,
+          0,
+          -158
+        ],
+        [
+          -5,
+          0,
+          -166
         ]
       ],
       "obstacles": [
         [
-          -5,
+          -6,
           0,
-          -25
+          -18
         ],
         [
           5,
           0,
-          -88
+          -80
         ]
       ],
-      "theme": {
-        "sky": "#9bcef1",
-        "fog": "#bfdcf2"
-      },
-      "collidableMeshPrefix": "COLLIDER_"
+      "locationInspired": true,
+      "geographicallyExact": false
     },
     "imigrantes": {
-      "name": "Rodovia dos Imigrantes, SP",
-      "filename": "maps/imigrantes.glb",
-      "stylized": true,
-      "notGeographicallyExact": true,
+      "file": "assets/brazil/maps/imigrantes.glb",
+      "collisionMeshPrefix": "COLLIDER_",
+      "name": "Rodovia dos Imigrantes - SP",
       "spawn": {
         "position": [
-          0,
-          32.8,
-          170
+          0.0,
+          35.9,
+          168
         ],
-        "yawRad": -0.21486103258208705
+        "yawRad": -0.19287707742610338
       },
       "route": [
         [
-          0,
-          32,
-          170
+          0.0,
+          35.0,
+          168
         ],
         [
-          2.4005258538895626,
-          31.15,
-          159
+          2.1483548811098903,
+          34.1,
+          157
         ],
         [
-          4.685334115725996,
-          30.3,
-          148
+          4.2272907993010795,
+          33.2,
+          146
         ],
         [
-          6.744285371707772,
-          29.45,
-          137
+          6.169631899837358,
+          32.3,
+          135
         ],
         [
-          8.478127667888662,
-          28.6,
-          126
+          7.912616063657677,
+          31.4,
+          124
         ],
         [
-          9.803280960675789,
-          27.75,
-          115
+          9.3999229155298,
+          30.5,
+          113
         ],
         [
-          10.655866101300917,
+          10.58349368261937,
+          29.6,
+          102
+        ],
+        [
+          11.425084099086188,
+          28.7,
+          91
+        ],
+        [
+          11.897500178300238,
+          27.8,
+          80
+        ],
+        [
+          11.985476921646288,
           26.9,
-          104
+          69
         ],
         [
-          10.99478413666027,
-          26.05,
-          93
+          11.686171570538344,
+          26.0,
+          58
         ],
         [
-          10.803697488513803,
-          25.2,
-          82
+          11.009255463381718,
+          25.1,
+          47
         ],
         [
-          10.091817508099908,
-          24.35,
-          71
+          9.976601529344197,
+          24.2,
+          36
         ],
         [
-          8.893460442015492,
-          23.5,
-          60
+          8.621577516829515,
+          23.299999999999997,
+          25
         ],
         [
-          7.266393214071208,
-          22.65,
-          49
+          6.987967794288982,
+          22.4,
+          14
         ],
         [
-          5.2890487648751305,
-          21.8,
-          38
+          5.128558562805962,
+          21.5,
+          3
         ],
         [
-          3.0567451839824544,
-          20.950000000000003,
-          27
+          3.1034321959333298,
+          20.6,
+          -8
         ],
         [
-          0.6770908917290446,
-          20.1,
-          16
+          0.9780258211232294,
+          19.7,
+          -19
         ],
         [
-          -1.7352026355757304,
-          19.25,
-          5
+          -1.178983124941299,
+          18.8,
+          -30
         ],
         [
-          -4.063850543989249,
-          18.4,
-          -6
+          -3.297896043877488,
+          17.9,
+          -41
         ],
         [
-          -6.19660012510407,
-          17.55,
-          -17
+          -5.310245319538225,
+          17.0,
+          -52
         ],
         [
-          -8.030641969232295,
-          16.700000000000003,
-          -28
+          -7.151006685693167,
+          16.099999999999998,
+          -63
         ],
         [
-          -9.477565903418146,
-          15.850000000000001,
-          -39
+          -8.760700330071595,
+          15.2,
+          -74
         ],
         [
-          -10.467622812784676,
-          15,
-          -50
+          -10.087312842602334,
+          14.3,
+          -85
         ],
         [
-          -10.9530869036847,
-          14.150000000000002,
-          -61
+          -11.087977904678255,
+          13.399999999999999,
+          -96
         ],
         [
-          -10.91055633042004,
-          13.3,
-          -72
+          -11.730361411981164,
+          12.5,
+          -107
         ],
         [
-          -10.342081283584916,
-          12.45,
-          -83
+          -11.993706273927408,
+          11.599999999999998,
+          -118
         ],
         [
-          -9.275065160420585,
-          11.600000000000001,
-          -94
+          -11.86950312953244,
+          10.7,
+          -129
         ],
         [
-          -7.7609435812743115,
-          10.75,
-          -105
+          -11.361765307111307,
+          9.8,
+          -140
         ],
         [
-          -5.872704930308087,
-          9.900000000000002,
-          -116
+          -10.486899143148268,
+          8.899999999999999,
+          -151
         ],
         [
-          -3.7013719430435463,
-          9.05,
-          -127
-        ],
-        [
-          -1.3516139461720504,
-          8.2,
-          -138
-        ],
-        [
-          1.0632987379455896,
-          7.350000000000001,
-          -149
-        ],
-        [
-          3.4269549986471564,
-          6.5,
-          -160
-        ],
-        [
-          5.625414546355476,
-          5.650000000000002,
-          -171
+          -9.273173850671853,
+          8.0,
+          -162
         ]
       ],
       "obstacles": [
         [
-          -10.342081283584916,
-          12.45,
-          -83
+          8.987967794288982,
+          22.4,
+          14
+        ],
+        [
+          -9.087977904678255,
+          13.399999999999999,
+          -96
         ]
       ],
-      "theme": {
-        "sky": "#a9d3d9",
-        "fog": "#d8e6e3"
-      },
-      "collidableMeshPrefix": "COLLIDER_"
+      "locationInspired": true,
+      "geographicallyExact": false
     },
     "serra-do-rio-do-rastro": {
-      "name": "Serra do Rio do Rastro, SC",
-      "filename": "maps/serra-do-rio-do-rastro.glb",
-      "stylized": true,
-      "notGeographicallyExact": true,
+      "file": "assets/brazil/maps/serra-do-rio-do-rastro.glb",
+      "collisionMeshPrefix": "COLLIDER_",
+      "name": "Serra do Rio do Rastro - SC",
       "spawn": {
         "position": [
           0,
-          52.8,
+          55.9,
           170
         ],
         "yawRad": 0
@@ -617,97 +679,99 @@
       "route": [
         [
           0,
-          52,
+          55,
           170
         ],
         [
           0,
-          49,
+          52,
           135
         ],
         [
-          45,
+          48,
+          49,
+          106
+        ],
+        [
+          66,
           46,
-          100
+          76
         ],
         [
-          73,
+          27,
           43,
-          70
-        ],
-        [
-          24,
-          40,
-          48
+          53
         ],
         [
           -30,
-          37,
+          40,
           42
         ],
         [
           -70,
+          37,
+          15
+        ],
+        [
+          -63,
           34,
-          14
+          -23
         ],
         [
-          -60,
+          -20,
           31,
-          -22
+          -35
         ],
         [
-          -16,
+          42,
           28,
-          -37
+          -49
         ],
         [
-          47,
+          74,
           25,
-          -48
-        ],
-        [
-          76,
-          22,
-          -76
+          -79
         ],
         [
           40,
-          19,
-          -104
+          22,
+          -106
         ],
         [
           -15,
+          19,
+          -111
+        ],
+        [
+          -57,
           16,
-          -115
+          -132
         ],
         [
-          -60,
+          -40,
           13,
-          -135
-        ],
-        [
-          -37,
-          10,
           -154
         ],
         [
           0,
-          7,
-          -171
+          10,
+          -169
         ]
       ],
       "obstacles": [
         [
-          -16,
-          28,
-          -37
+          -30,
+          40,
+          42
+        ],
+        [
+          -15,
+          19,
+          -111
         ]
       ],
-      "theme": {
-        "sky": "#b1cdd5",
-        "fog": "#dae3dd"
-      },
-      "collidableMeshPrefix": "COLLIDER_"
+      "locationInspired": true,
+      "geographicallyExact": false
     }
   }
 }
