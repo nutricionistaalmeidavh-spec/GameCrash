@@ -1,4 +1,4 @@
-import {BRAZIL_CARS,BRAZIL_MAPS,type BrazilCarId,type BrazilMapId} from '../brazil/adapter';
+import {BRAZIL_CARS,BRAZIL_MAPS,type BrazilCarId,type BrazilMapId} from '../brazil/catalog.ts';
 
 export type VehicleId = 'sedan' | 'hatch' | 'suv' | BrazilCarId;
 export type SceneryId = 'original' | BrazilMapId;
