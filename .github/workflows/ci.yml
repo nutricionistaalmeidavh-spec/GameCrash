@@ -60,9 +60,17 @@ jobs:
         with:
           name: gamecrash-dist
           path: dist
+      - name: Ensure Pages deploys Actions artifacts, not raw source
+        env:
+          GITHUB_TOKEN: ${{ github.token }}
+        run: node scripts/pages-source.mjs
       - uses: actions/configure-pages@v5
       - uses: actions/upload-pages-artifact@v3
         with:
           path: dist
       - id: deployment
         uses: actions/deploy-pages@v4
+      - name: Smoke test live Pages HTML and compiled JS/CSS
+        env:
+          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+        run: node scripts/check-pages.mjs

@@ -40,9 +40,15 @@ O build fica em `dist/` e pode ser hospedado em qualquer servidor estático.
 
 **Importante:** a porcentagem de sobrevivência é um elemento fictício de jogo, não uma avaliação de acidentes reais. Os amassados são deformações gráficas reativas, não um solver soft-body completo.
 
-## CI e publicação opcional
+## Publicação oficial no GitHub Pages
 
-O workflow de QA executa testes e build em toda PR e push em branch de feature. O build é publicado como artefato. Para publicar no GitHub Pages, selecione em Settings → Pages → Build and deployment o modo GitHub Actions e então execute manualmente o workflow Publish GitHub Pages (opt-in). O workflow de Pages roda na branch padrão.
+O GitHub Actions faz **testes + build Vite + QA Chromium/WebKit + publicação no Pages**. A publicação usa exclusivamente o artefato compilado `dist/`.
+
+No primeiro deploy o workflow `ci.yml` configura o Pages para usar a fonte **GitHub Actions**, desativando o antigo processo Jekyll que publicava os arquivos-fonte (`src/main.ts`) incorretamente. Também faz smoke test do site publicado, conferindo os links JavaScript/CSS.
+
+O jogo fica em https://nutricionistaalmeidavh-spec.github.io/GameCrash/ .
+
+Se a conta não permitir a configuração automática, em **Settings → Pages → Build and deployment → Source** selecione **GitHub Actions** uma única vez. O workflow falhará explicitamente nesse caso, sem afirmar sucesso indevido.
 
 Licença MIT.
 
@@ -51,3 +57,10 @@ Licença MIT.
 A simulação começa parada. No celular, pressione e mantenha **ACELERAR** para avançar; solte para reduzir a velocidade. **FREAR** desacelera o carro e as setas controlam a direção. No desktop, use **W/↑** para acelerar e **S/↓/espaço** para frear.
 
 A publicação no GitHub Pages é realizada automaticamente pelo workflow de CI na `main`, somente após testes unitários, build e QA nos navegadores Chromium e WebKit aprovados.
+
+## Turbo 600 km/h e 120 lombadas
+
+- Acelerador por toque (segurar) e teclado (W/↑), com limite ajustável de **60 a 600 km/h**; padrão 600 km/h para todos os carros em modo arcade.
+- Cenário **120 LOMBADAS**: pista estendida, 120 lombadas físicas renderizadas com instancing, contador de passagem e desgaste acumulado ficcional.
+- A simulação continua depois de cada lombada; o relatório exibe quantas foram superadas.
+- Sem dependências pagas, sem servidor obrigatório, testado na CI em Chromium e WebKit.
