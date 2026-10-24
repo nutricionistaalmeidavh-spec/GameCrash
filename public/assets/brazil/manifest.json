@@ -1,0 +1,713 @@
+{
+  "version": 1,
+  "units": "meters",
+  "vehicleForward": "-Z",
+  "cars": {
+    "gol": {
+      "name": "Volkswagen Gol",
+      "filename": "cars/gol.glb",
+      "kind": "hatch",
+      "massKg": 1000,
+      "widthMeters": 1.65,
+      "lengthMeters": 3.9,
+      "heightMeters": 1.45,
+      "wheelbaseMeters": 2.45,
+      "collider": {
+        "halfExtents": [
+          0.7919999999999999,
+          0.58,
+          1.716
+        ],
+        "center": [
+          0,
+          0.7685,
+          0
+        ]
+      }
+    },
+    "strada": {
+      "name": "Fiat Strada",
+      "filename": "cars/strada.glb",
+      "kind": "pickup",
+      "massKg": 1230,
+      "widthMeters": 1.73,
+      "lengthMeters": 4.45,
+      "heightMeters": 1.58,
+      "wheelbaseMeters": 2.73,
+      "collider": {
+        "halfExtents": [
+          0.8303999999999999,
+          0.6320000000000001,
+          1.9580000000000002
+        ],
+        "center": [
+          0,
+          0.8374,
+          0
+        ]
+      }
+    },
+    "palio": {
+      "name": "Fiat Palio",
+      "filename": "cars/palio.glb",
+      "kind": "hatch",
+      "massKg": 1000,
+      "widthMeters": 1.64,
+      "lengthMeters": 3.82,
+      "heightMeters": 1.47,
+      "wheelbaseMeters": 2.37,
+      "collider": {
+        "halfExtents": [
+          0.7871999999999999,
+          0.588,
+          1.6807999999999998
+        ],
+        "center": [
+          0,
+          0.7791,
+          0
+        ]
+      }
+    },
+    "onix": {
+      "name": "Chevrolet Onix",
+      "filename": "cars/onix.glb",
+      "kind": "hatch",
+      "massKg": 1090,
+      "widthMeters": 1.75,
+      "lengthMeters": 4.15,
+      "heightMeters": 1.47,
+      "wheelbaseMeters": 2.55,
+      "collider": {
+        "halfExtents": [
+          0.84,
+          0.588,
+          1.826
+        ],
+        "center": [
+          0,
+          0.7791,
+          0
+        ]
+      }
+    },
+    "uno": {
+      "name": "Fiat Uno",
+      "filename": "cars/uno.glb",
+      "kind": "boxy",
+      "massKg": 930,
+      "widthMeters": 1.65,
+      "lengthMeters": 3.76,
+      "heightMeters": 1.48,
+      "wheelbaseMeters": 2.37,
+      "collider": {
+        "halfExtents": [
+          0.7919999999999999,
+          0.592,
+          1.6543999999999999
+        ],
+        "center": [
+          0,
+          0.7844,
+          0
+        ]
+      }
+    },
+    "hb20": {
+      "name": "Hyundai HB20",
+      "filename": "cars/hb20.glb",
+      "kind": "hatch",
+      "massKg": 1080,
+      "widthMeters": 1.72,
+      "lengthMeters": 4.01,
+      "heightMeters": 1.48,
+      "wheelbaseMeters": 2.53,
+      "collider": {
+        "halfExtents": [
+          0.8256,
+          0.592,
+          1.7644
+        ],
+        "center": [
+          0,
+          0.7844,
+          0
+        ]
+      }
+    },
+    "fiesta": {
+      "name": "Ford Fiesta",
+      "filename": "cars/fiesta.glb",
+      "kind": "hatch",
+      "massKg": 1130,
+      "widthMeters": 1.72,
+      "lengthMeters": 3.97,
+      "heightMeters": 1.47,
+      "wheelbaseMeters": 2.49,
+      "collider": {
+        "halfExtents": [
+          0.8256,
+          0.588,
+          1.7468000000000001
+        ],
+        "center": [
+          0,
+          0.7791,
+          0
+        ]
+      }
+    },
+    "ka": {
+      "name": "Ford Ka",
+      "filename": "cars/ka.glb",
+      "kind": "hatch",
+      "massKg": 1030,
+      "widthMeters": 1.7,
+      "lengthMeters": 3.89,
+      "heightMeters": 1.51,
+      "wheelbaseMeters": 2.49,
+      "collider": {
+        "halfExtents": [
+          0.816,
+          0.6040000000000001,
+          1.7116
+        ],
+        "center": [
+          0,
+          0.8003,
+          0
+        ]
+      }
+    },
+    "fox": {
+      "name": "Volkswagen Fox",
+      "filename": "cars/fox.glb",
+      "kind": "boxy",
+      "massKg": 1040,
+      "widthMeters": 1.66,
+      "lengthMeters": 3.83,
+      "heightMeters": 1.55,
+      "wheelbaseMeters": 2.47,
+      "collider": {
+        "halfExtents": [
+          0.7968,
+          0.6200000000000001,
+          1.6852
+        ],
+        "center": [
+          0,
+          0.8215000000000001,
+          0
+        ]
+      }
+    },
+    "celta": {
+      "name": "Chevrolet Celta",
+      "filename": "cars/celta.glb",
+      "kind": "hatch",
+      "massKg": 920,
+      "widthMeters": 1.63,
+      "lengthMeters": 3.78,
+      "heightMeters": 1.45,
+      "wheelbaseMeters": 2.44,
+      "collider": {
+        "halfExtents": [
+          0.7823999999999999,
+          0.58,
+          1.6632
+        ],
+        "center": [
+          0,
+          0.7685,
+          0
+        ]
+      }
+    }
+  },
+  "maps": {
+    "brasilia-eixo-monumental": {
+      "name": "Eixo Monumental, Brasilia",
+      "filename": "maps/brasilia-eixo-monumental.glb",
+      "stylized": true,
+      "notGeographicallyExact": true,
+      "spawn": {
+        "position": [
+          -5,
+          0.8,
+          153
+        ],
+        "yawRad": 0
+      },
+      "route": [
+        [
+          -5,
+          0,
+          153
+        ],
+        [
+          -5,
+          0,
+          143
+        ],
+        [
+          -5,
+          0,
+          133
+        ],
+        [
+          -5,
+          0,
+          123
+        ],
+        [
+          -5,
+          0,
+          113
+        ],
+        [
+          -5,
+          0,
+          103
+        ],
+        [
+          -5,
+          0,
+          93
+        ],
+        [
+          -5,
+          0,
+          83
+        ],
+        [
+          -5,
+          0,
+          73
+        ],
+        [
+          -5,
+          0,
+          63
+        ],
+        [
+          -5,
+          0,
+          53
+        ],
+        [
+          -5,
+          0,
+          43
+        ],
+        [
+          -5,
+          0,
+          33
+        ],
+        [
+          -5,
+          0,
+          23
+        ],
+        [
+          -5,
+          0,
+          13
+        ],
+        [
+          -5,
+          0,
+          3
+        ],
+        [
+          -5,
+          0,
+          -7
+        ],
+        [
+          -5,
+          0,
+          -17
+        ],
+        [
+          -5,
+          0,
+          -27
+        ],
+        [
+          -5,
+          0,
+          -37
+        ],
+        [
+          -5,
+          0,
+          -47
+        ],
+        [
+          -5,
+          0,
+          -57
+        ],
+        [
+          -5,
+          0,
+          -67
+        ],
+        [
+          -5,
+          0,
+          -77
+        ],
+        [
+          -5,
+          0,
+          -87
+        ],
+        [
+          -5,
+          0,
+          -97
+        ],
+        [
+          -5,
+          0,
+          -107
+        ],
+        [
+          -5,
+          0,
+          -117
+        ],
+        [
+          -5,
+          0,
+          -127
+        ],
+        [
+          -5,
+          0,
+          -137
+        ],
+        [
+          -5,
+          0,
+          -147
+        ]
+      ],
+      "obstacles": [
+        [
+          -5,
+          0,
+          -25
+        ],
+        [
+          5,
+          0,
+          -88
+        ]
+      ],
+      "theme": {
+        "sky": "#9bcef1",
+        "fog": "#bfdcf2"
+      },
+      "collidableMeshPrefix": "COLLIDER_"
+    },
+    "imigrantes": {
+      "name": "Rodovia dos Imigrantes, SP",
+      "filename": "maps/imigrantes.glb",
+      "stylized": true,
+      "notGeographicallyExact": true,
+      "spawn": {
+        "position": [
+          0,
+          32.8,
+          170
+        ],
+        "yawRad": -0.21486103258208705
+      },
+      "route": [
+        [
+          0,
+          32,
+          170
+        ],
+        [
+          2.4005258538895626,
+          31.15,
+          159
+        ],
+        [
+          4.685334115725996,
+          30.3,
+          148
+        ],
+        [
+          6.744285371707772,
+          29.45,
+          137
+        ],
+        [
+          8.478127667888662,
+          28.6,
+          126
+        ],
+        [
+          9.803280960675789,
+          27.75,
+          115
+        ],
+        [
+          10.655866101300917,
+          26.9,
+          104
+        ],
+        [
+          10.99478413666027,
+          26.05,
+          93
+        ],
+        [
+          10.803697488513803,
+          25.2,
+          82
+        ],
+        [
+          10.091817508099908,
+          24.35,
+          71
+        ],
+        [
+          8.893460442015492,
+          23.5,
+          60
+        ],
+        [
+          7.266393214071208,
+          22.65,
+          49
+        ],
+        [
+          5.2890487648751305,
+          21.8,
+          38
+        ],
+        [
+          3.0567451839824544,
+          20.950000000000003,
+          27
+        ],
+        [
+          0.6770908917290446,
+          20.1,
+          16
+        ],
+        [
+          -1.7352026355757304,
+          19.25,
+          5
+        ],
+        [
+          -4.063850543989249,
+          18.4,
+          -6
+        ],
+        [
+          -6.19660012510407,
+          17.55,
+          -17
+        ],
+        [
+          -8.030641969232295,
+          16.700000000000003,
+          -28
+        ],
+        [
+          -9.477565903418146,
+          15.850000000000001,
+          -39
+        ],
+        [
+          -10.467622812784676,
+          15,
+          -50
+        ],
+        [
+          -10.9530869036847,
+          14.150000000000002,
+          -61
+        ],
+        [
+          -10.91055633042004,
+          13.3,
+          -72
+        ],
+        [
+          -10.342081283584916,
+          12.45,
+          -83
+        ],
+        [
+          -9.275065160420585,
+          11.600000000000001,
+          -94
+        ],
+        [
+          -7.7609435812743115,
+          10.75,
+          -105
+        ],
+        [
+          -5.872704930308087,
+          9.900000000000002,
+          -116
+        ],
+        [
+          -3.7013719430435463,
+          9.05,
+          -127
+        ],
+        [
+          -1.3516139461720504,
+          8.2,
+          -138
+        ],
+        [
+          1.0632987379455896,
+          7.350000000000001,
+          -149
+        ],
+        [
+          3.4269549986471564,
+          6.5,
+          -160
+        ],
+        [
+          5.625414546355476,
+          5.650000000000002,
+          -171
+        ]
+      ],
+      "obstacles": [
+        [
+          -10.342081283584916,
+          12.45,
+          -83
+        ]
+      ],
+      "theme": {
+        "sky": "#a9d3d9",
+        "fog": "#d8e6e3"
+      },
+      "collidableMeshPrefix": "COLLIDER_"
+    },
+    "serra-do-rio-do-rastro": {
+      "name": "Serra do Rio do Rastro, SC",
+      "filename": "maps/serra-do-rio-do-rastro.glb",
+      "stylized": true,
+      "notGeographicallyExact": true,
+      "spawn": {
+        "position": [
+          0,
+          52.8,
+          170
+        ],
+        "yawRad": 0
+      },
+      "route": [
+        [
+          0,
+          52,
+          170
+        ],
+        [
+          0,
+          49,
+          135
+        ],
+        [
+          45,
+          46,
+          100
+        ],
+        [
+          73,
+          43,
+          70
+        ],
+        [
+          24,
+          40,
+          48
+        ],
+        [
+          -30,
+          37,
+          42
+        ],
+        [
+          -70,
+          34,
+          14
+        ],
+        [
+          -60,
+          31,
+          -22
+        ],
+        [
+          -16,
+          28,
+          -37
+        ],
+        [
+          47,
+          25,
+          -48
+        ],
+        [
+          76,
+          22,
+          -76
+        ],
+        [
+          40,
+          19,
+          -104
+        ],
+        [
+          -15,
+          16,
+          -115
+        ],
+        [
+          -60,
+          13,
+          -135
+        ],
+        [
+          -37,
+          10,
+          -154
+        ],
+        [
+          0,
+          7,
+          -171
+        ]
+      ],
+      "obstacles": [
+        [
+          -16,
+          28,
+          -37
+        ]
+      ],
+      "theme": {
+        "sky": "#b1cdd5",
+        "fog": "#dae3dd"
+      },
+      "collidableMeshPrefix": "COLLIDER_"
+    }
+  }
+}
