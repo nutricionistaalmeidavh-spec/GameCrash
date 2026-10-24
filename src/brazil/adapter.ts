@@ -1,11 +1,8 @@
 import * as THREE from 'three';
 import {GLTFLoader} from 'three/addons/loaders/GLTFLoader.js';
-import manifest from '../../public/assets/brazil/manifest.json';
-
-export const BRAZIL_CARS=manifest.cars;
-export const BRAZIL_MAPS=manifest.maps;
-export type BrazilCarId=keyof typeof BRAZIL_CARS;
-export type BrazilMapId=keyof typeof BRAZIL_MAPS;
+import {BRAZIL_CARS,BRAZIL_MAPS,type BrazilCarId,type BrazilMapId} from './catalog.ts';
+export {BRAZIL_CARS,BRAZIL_MAPS};
+export type {BrazilCarId,BrazilMapId};
 
 export function brazilAssetURL(file:string,base:string=import.meta.env.BASE_URL):string {
   if(!file.startsWith('assets/brazil/') || file.includes('..'))throw new Error('Arquivo fora do catálogo brasileiro');
