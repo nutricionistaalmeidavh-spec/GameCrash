@@ -63,7 +63,7 @@ export class Game {
   selectScenery(id:SceneryId){this.sceneryId=id;this.reset()}
   toggleCamera(){this.viewMode=this.viewMode===0?1:0}
   setControls(patch:Partial<Controls>){Object.assign(this.controls,patch)}
-  start(){if(this.phase==='running')return;this.reset();this.phase='running';this.controls.throttle=true;this.startedAt=performance.now()}
+  start(){if(this.phase==='running')return;this.reset();this.phase='running';this.controls.throttle=false;this.startedAt=performance.now()}
   private reset(){
     const revision=++this.resourceRevision;
     if(this.scenery){this.scene.remove(this.scenery);disposeBrazilObject(this.scenery);this.scenery=undefined}
