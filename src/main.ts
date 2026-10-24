@@ -101,7 +101,7 @@ $.start.addEventListener('click',start);
 $.retry.addEventListener('click',start);
 $.camera.addEventListener('click',()=>game.toggleCamera());
 $.mute.addEventListener('click',()=>{soundEnabled=!soundEnabled;$.mute.classList.toggle('active',soundEnabled);$.mute.title=soundEnabled?'Desativar som':'Ativar som'});
-for(const id of ['left','right','brake'] as const)bindHolding(id,id);
+for(const id of ['left','right','brake','accelerate'] as const)bindHolding(id,id==='accelerate'?'throttle':id);
 buildSelectors();
 void game.init().then(()=>{$.loading.classList.add('hidden');document.body.dataset.phase='ready'}).catch(error=>{
   $.loading.classList.add('hidden');$.fatal.classList.remove('hidden');
