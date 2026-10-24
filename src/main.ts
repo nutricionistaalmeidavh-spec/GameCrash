@@ -1,6 +1,6 @@
 import './styles.css';
 import {Game,type Result} from './game/Game';
-import {SCENARIOS,VEHICLES,type ScenarioId,type VehicleId} from './game/rules';
+import {SCENARIOS,VEHICLES,MAX_SPEED_KMH,SPEEDBUMPS,type ScenarioId,type VehicleId} from './game/rules';
 
 const element=<T extends HTMLElement>(id:string)=>document.getElementById(id) as T;
 const $={
@@ -8,6 +8,9 @@ const $={
   start:element<HTMLButtonElement>('start'),retry:element<HTMLButtonElement>('retry'),camera:element<HTMLButtonElement>('camera'),mute:element<HTMLButtonElement>('mute'),
   speed:element<HTMLSpanElement>('speed'),speedBar:element<HTMLSpanElement>('speed-bar'),distance:element<HTMLSpanElement>('distance'),
   integrity:element<HTMLSpanElement>('integrity'),marker:element<HTMLSpanElement>('stage-marker'),
+  speedLimit:element<HTMLInputElement>('max-speed'),speedLimitValue:element<HTMLOutputElement>('max-speed-value'),
+  bumpsStat:element<HTMLDivElement>('bumps-stat'),bumpsCount:element<HTMLSpanElement>('bumps-count'),
+  resultBumps:element<HTMLDivElement>('result-bumps'),resultBumpsCount:element<HTMLSpanElement>('result-bumps-count'),
   result:element<HTMLDivElement>('result-wrap'),resultTitle:element<HTMLHeadingElement>('result-title'),
   survival:element<HTMLSpanElement>('survival'),impactSpeed:element<HTMLSpanElement>('impact-speed'),
   damage:element<HTMLSpanElement>('damage'),controls:element<HTMLDivElement>('drive-controls'),
@@ -20,7 +23,8 @@ let lastPhase='ready';
 const game=new Game($.canvas,{
   onTelemetry(value){
     $.speed.textContent=Math.round(value.speed).toString().padStart(3,'0');
-    $.speedBar.style.width=`${Math.round(Math.min(100,value.speed/250*100))}%`;
+    $.speedBar.style.width=`${Math.round(Math.min(100,value.speed/Number($.speedLimit.value)*100))}%`;
+    $.bumpsCount.textContent=`${String(value.bumpsPassed).padStart(3,'0')}/${SPEEDBUMPS.count}`;
     $.distance.textContent=`${String(value.distance).padStart(3,'0')} m`;
     $.integrity.textContent=`${value.integrity}%`;
     if(value.phase!==lastPhase){lastPhase=value.phase;document.body.dataset.phase=value.phase}
@@ -33,15 +37,18 @@ const game=new Game($.canvas,{
   }
 });
 function showResult(result:Result){
-  $.resultTitle.textContent=result.avoided?'OBSTÁCULO EVITADO':'TESTE CONCLUÍDO';
+  $.resultTitle.textContent=result.scenario==='speedbumps'?(result.avoided?'120 LOMBADAS SUPERADAS':'DESAFIO INTERROMPIDO'):(result.avoided?'OBSTÁCULO EVITADO':'TESTE CONCLUÍDO');
+  $.resultBumps.classList.toggle('hidden',result.scenario!=='speedbumps');
+  $.resultBumpsCount.textContent=`${result.bumpsPassed}/${SPEEDBUMPS.count}`;
   $.survival.textContent=String(result.survival).padStart(2,'0');
-  $.impactSpeed.textContent=result.avoided?'SEM IMPACTO':`${result.speed} KM/H`;
-  $.damage.textContent=result.avoided?'0%':`${result.damage}%`;
+  $.impactSpeed.textContent=result.scenario==='speedbumps'?`${result.speed} KM/H`:(result.avoided?'SEM IMPACTO':`${result.speed} KM/H`);
+  $.damage.textContent=`${result.damage}%`;
   $.result.classList.remove('hidden');
 }
 function updateSelectors(){
   for(const btn of $.vehicles.querySelectorAll('button'))btn.classList.toggle('selected',btn.dataset.vehicle===currentVehicle);
   for(const btn of $.scenarios.querySelectorAll('button'))btn.classList.toggle('selected',btn.dataset.scenario===currentScenario);
+  $.bumpsStat.classList.toggle('hidden',currentScenario!=='speedbumps');
 }
 function hideResult(){if(resultTimer)clearTimeout(resultTimer);$.result.classList.add('hidden')}
 function buildSelectors(){
@@ -92,6 +99,8 @@ $.start.addEventListener('click',start);
 $.retry.addEventListener('click',start);
 $.camera.addEventListener('click',()=>game.toggleCamera());
 $.mute.addEventListener('click',()=>{soundEnabled=!soundEnabled;$.mute.classList.toggle('active',soundEnabled);$.mute.title=soundEnabled?'Desativar som':'Ativar som'});
+$.speedLimit.max=String(MAX_SPEED_KMH);
+$.speedLimit.addEventListener('input',()=>{$.speedLimitValue.value=`${$.speedLimit.value} KM/H`;game.setSpeedLimitKmh(Number($.speedLimit.value))});
 for(const id of ['left','right','brake','accelerate'] as const)bindHolding(id,id==='accelerate'?'throttle':id);
 buildSelectors();
 void game.init().then(()=>{$.loading.classList.add('hidden');document.body.dataset.phase='ready'}).catch(error=>{
