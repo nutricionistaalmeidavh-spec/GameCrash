@@ -77,3 +77,36 @@ test('a single release moves the real mesh assembly, keeps parent shell, does no
     assert.equal(parent.position.x,5);
   }finally{world.free()}
 });
+
+test('Concept GT does not lose panels entering the megarramp at instant 200 km/h',async()=>{
+  const {buildRampProfile,rampSegmentVertices}=await import('../src/game/ramp.ts');
+  const {SCENARIOS}=await import('../src/game/rules.ts');
+  const world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=PHYSICS_DT;
+  world.createCollider(RAPIER.ColliderDesc.cuboid(260,.3,450).setTranslation(0,-.225,320));
+  const points=buildRampProfile(SCENARIOS.ramp.z);
+  for(let i=1;i<points.length;i++)world.createCollider(RAPIER.ColliderDesc.convexHull(rampSegmentVertices(points[i-1],points[i])).setFriction(1));
+  const car=new VehicleDynamics(RAPIER,world,VEHICLES.concept);
+  try{
+    for(let i=0;i<120;i++){car.update(EMPTY_INPUT,600);world.step()}
+    const start=SCENARIOS.ramp.z-31;
+    const position=car.body.translation();
+    car.body.setTranslation({x:position.x,y:position.y,z:start},true);
+    for(const node of car.structure.nodes)if(!node.anchor){
+      const p=node.body.translation();node.body.setTranslation({x:p.x,y:p.y,z:p.z+start},true);
+    }
+    car.ensureForwardSpeed(200,600,true);
+    let entered=false,maxBroken=0,maxFragments=0;
+    for(let i=0;i<260;i++){
+      car.update({...EMPTY_INPUT,throttle:true},600);world.step();
+      const z=car.body.translation().z;
+      if(z>SCENARIOS.ramp.z-11&&z<SCENARIOS.ramp.z+2){
+        entered=true;maxBroken=Math.max(maxBroken,car.structure.brokenBeams);
+        maxFragments=Math.max(maxFragments,car.structure.fragments.length);
+      }
+      if(z>SCENARIOS.ramp.z+6)break;
+    }
+    assert.ok(entered,'Concept must enter the ramp');
+    assert.equal(maxBroken,0,'an actual incline must not destroy the structure');
+    assert.equal(maxFragments,0,'doors and glass should not detach just from a ramp transition');
+  }finally{world.free()}
+});
