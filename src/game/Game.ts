@@ -68,6 +68,7 @@ export class Game {
     this.impacts=new ImpactParticles(this.quality.mobile?26:64);
     this.scene.add(this.atmosphere,this.impacts.mesh);
     canvas.dataset.renderProfile=this.quality.mobile?'mobile':'desktop';
+    canvas.dataset.graphics='auto';
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(this.quality.configure(window.innerWidth,window.innerHeight,window.devicePixelRatio||1));
     this.renderer.shadowMap.enabled=true;
