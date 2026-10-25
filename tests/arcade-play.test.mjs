@@ -38,10 +38,10 @@ test('instant speed respects the selected slider maximum and never lowers a fast
   }finally{world.free()}
 });
 test('long 120-bump mode ignores damage, rollovers, and elapsed time; ends only at the line or out of track',()=>{
-  assert.equal(bumpRunOutcome({x:0,y:.7,z:SPEEDBUMPS.firstZ+SPEEDBUMPS.spacing*2},0,1000,true),null);
-  assert.equal(bumpRunOutcome({x:0,y:.7,z:SPEEDBUMPS.finishZ},100,10,false),'complete');
-  assert.equal(bumpRunOutcome({x:46,y:.7,z:100},100,10,false),'out');
-  assert.equal(bumpRunOutcome({x:0,y:-7,z:100},100,10,false),'out');
+  assert.equal(bumpRunOutcome({x:0,y:.7,z:SPEEDBUMPS.firstZ+SPEEDBUMPS.spacing*2,integrity:0,elapsed:1000,overturnedTime:100}),null);
+  assert.equal(bumpRunOutcome({x:0,y:.7,z:SPEEDBUMPS.finishZ,integrity:10,elapsed:20,overturnedTime:0}),'complete');
+  assert.equal(bumpRunOutcome({x:46,y:.7,z:100,integrity:100,elapsed:10,overturnedTime:0}),'out');
+  assert.equal(bumpRunOutcome({x:0,y:-7,z:100,integrity:100,elapsed:10,overturnedTime:0}),'out');
 });
 test('holding arcade accelerator maintains forward motion through several physical bumps',()=>{
   const {world,car}=fixture();try{
