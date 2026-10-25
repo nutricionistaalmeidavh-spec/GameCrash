@@ -148,3 +148,16 @@ body[data-phase='crashed'] .inspection-tools{display:flex}
 @media(max-width:700px){.inspection-tools{flex-wrap:wrap;justify-content:center}.inspection-tools span{flex-basis:100%;text-align:center;margin-right:0}.result-card{padding:18px}.result-emblem{font-size:40px}.survival{font-size:76px}.result-metrics b{font-size:21px}}
 
 .model-status{font-size:10px;color:#c6d4e0;min-height:14px;margin:3px 0}.asset-credit{float:right;font-size:9px;color:#9fb1c3;text-decoration:underline}
+
+/* Small on-screen graphics control, safe on compact iPhones and in landscape. */
+.graphic-btn{height:38px;min-width:47px;padding:0 8px;border:1px solid #ffffff55;border-radius:10px;
+  color:#e5ebf0;background:#1c2934ca;font-size:10px;font-weight:900;letter-spacing:.03em;
+  box-shadow:0 3px 14px #0004}
+.graphic-btn[aria-pressed='true']{border-color:#d5ff4288;color:#e1ff98;background:#1a2d2b}
+@media(max-width:700px){
+  .graphic-btn{height:30px;min-width:34px;padding:0 4px;font-size:8px;border-radius:8px}
+  .header-right{flex-shrink:0}
+  .topbar .brand{min-width:0}
+  .topbar .brand>span:last-child{white-space:nowrap}
+}
+@media(max-width:360px){.topbar .brand{font-size:15px}.graphic-btn{min-width:30px}}
