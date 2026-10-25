@@ -4,18 +4,8 @@ import type {ScenarioId} from './rules.ts';
 import {SCENARIOS,SPEEDBUMPS} from './rules.ts';
 import {bumpShape} from './bump.ts';
 import {createSurfaceTextures,type GraphicsProfile} from './visuals.ts';
+import {buildRampProfile,rampSegmentVertices} from './ramp.ts';
 
-/** The road collider top is y=0.075. A flat entry and easing slope prevent
- *  a physical kerb being mistaken for a wall at 200 km/h.
- */
-export function buildRampProfile(centerZ:number):Array<{z:number;y:number}>{
-  return [
-    {z:centerZ-12,y:.075},
-    {z:centerZ-8,y:.075},
-    {z:centerZ-5,y:.26},
-    {z:centerZ+8,y:3.36}
-  ];
-}
 const mat=(color:number,roughness=1,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
 function addBox(root:THREE.Group,size:[number,number,number],pos:[number,number,number],material:THREE.Material){
   const mesh=new THREE.Mesh(new THREE.BoxGeometry(...size),material);mesh.position.set(...pos);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);return mesh;
@@ -109,13 +99,10 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
   if(scenario==='ramp'){
     // Smooth approach: ground-level entry, then gradual incline. Each visible
     // wedge uses the *same* coordinates as its Rapier convex collider.
-    const profile=buildRampProfile(z),width=9,bottom=-.19;
+    const profile=buildRampProfile(z);
     for(let i=1;i<profile.length;i++){
-      const a=profile[i-1],b=profile[i],half=width/2;
-      const vertices=new Float32Array([
-        -half,bottom,a.z,half,bottom,a.z,-half,a.y,a.z,half,a.y,a.z,
-        -half,bottom,b.z,half,bottom,b.z,-half,b.y,b.z,half,b.y,b.z
-      ]);
+      const a=profile[i-1],b=profile[i];
+      const vertices=rampSegmentVertices(a,b);
       const indices=[0,1,3,0,3,2,4,6,7,4,7,5,0,4,5,0,5,1,2,3,7,2,7,6,0,2,6,0,6,4,1,5,7,1,7,3];
       const geometry=new THREE.BufferGeometry();
       geometry.setAttribute('position',new THREE.BufferAttribute(vertices,3));
