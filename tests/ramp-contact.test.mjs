@@ -2,7 +2,7 @@ import {test,before} from 'node:test';
 import assert from 'node:assert/strict';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat/rapier.es.js';
-import {buildTrack,buildRampProfile} from '../src/game/track.ts';
+import {buildRampProfile,rampSegmentVertices} from '../src/game/ramp.ts';
 import {VehicleDynamics,PHYSICS_DT,EMPTY_INPUT} from '../src/game/driving.ts';
 import {VEHICLES,SCENARIOS} from '../src/game/rules.ts';
 import {sheetOffsets,cageWeights} from '../src/game/skin.ts';
@@ -22,7 +22,9 @@ test('megaramp begins seamlessly at road level without a vertical curb or physic
 });
 test('contact with ramp approach does not spawn debris or destroy the body before jump',()=>{
   const world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=PHYSICS_DT;
-  const scene=new THREE.Scene(),track=buildTrack(scene,world,'ramp');
+  world.createCollider(RAPIER.ColliderDesc.cuboid(260,.3,450).setTranslation(0,-.225,320));
+  const profile=buildRampProfile(SCENARIOS.ramp.z);
+  for(let i=1;i<profile.length;i++)world.createCollider(RAPIER.ColliderDesc.convexHull(rampSegmentVertices(profile[i-1],profile[i])).setFriction(1));
   const car=new VehicleDynamics(RAPIER,world,VEHICLES.sedan);
   try{
     for(let i=0;i<120;i++){car.update(EMPTY_INPUT,600);world.step()}
@@ -44,7 +46,7 @@ test('contact with ramp approach does not spawn debris or destroy the body befor
     }
     assert.ok(entered,'the vehicle must reach the ramp');
     assert.equal(highestBeforeTakeoff,0,'the approach must not tear the car apart before the jump');
-  }finally{track.dispose();world.free()}
+  }finally{world.free()}
 });
 test('render-only cage displacement is bounded and continuous even when two nodes separate',()=>{
   const nodes=[];
