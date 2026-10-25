@@ -152,7 +152,7 @@ test('controles cabem no celular em retrato e paisagem',async({page},testInfo)=>
   await page.locator('#start').click();
   for(const viewport of [{width:390,height:844},{width:844,height:390}]){
     await page.setViewportSize(viewport);
-    for(const id of ['left','right','brake','accelerate','garage','restart','camera','mute']){
+    for(const id of ['left','right','brake','accelerate','garage','restart','camera','mute','graphics']){
       await expect(page.locator('#'+id)).toBeVisible();
       expect(await page.locator('#'+id).evaluate(el=>{
         const b=el.getBoundingClientRect();
@@ -202,4 +202,21 @@ test('o acelerador entra direto a 200 km/h e as primeiras lombadas não encerram
   await expect(page.locator('body')).toHaveAttribute('data-phase','running');
   await expect(page.locator('#result-wrap')).toBeHidden();
   await pedal.dispatchEvent('pointerup',{pointerId:149,pointerType:'touch'});
+});
+
+test('qualidade gráfica muda entre AUTO, ECO, ALTO e ULTRA no iPhone',async({page},testInfo)=>{
+  await page.goto('/');
+  await expect(page.locator('#loading')).toBeHidden({timeout:30_000});
+  const graphics=page.getByRole('button',{name:/Qualidade gráfica/i});
+  await expect(graphics).toHaveText('AUTO');
+  for(const [label,profile] of [['ECO','eco'],['ALTO','high'],['ULTRA','ultra'],['AUTO','auto']]){
+    await graphics.click();
+    await expect(graphics).toHaveText(label);
+    await expect(page.locator('#game')).toHaveAttribute('data-graphics',profile);
+  }
+  await page.locator('[data-vehicle="sedan"]').click();
+  await expect(page.locator('#fatal')).toBeHidden();
+  await testInfo.attach('realistic-graphics-'+testInfo.project.name,{
+    body:await page.screenshot(),contentType:'image/png'
+  });
 });
