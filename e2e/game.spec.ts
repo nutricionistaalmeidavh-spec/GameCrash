@@ -44,6 +44,7 @@ test('dirige e mede deslocamento real na pista',async({page},testInfo)=>{
 });
 
 test('mostra o resultado do impacto e permite reiniciar',async({page},testInfo)=>{
+  test.setTimeout(150_000); // Software WebGL advances fewer physics frames per wall-clock second.
   const errors:string[]=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');
@@ -52,7 +53,7 @@ test('mostra o resultado do impacto e permite reiniciar',async({page},testInfo)=
   await page.locator('#start').click();
   await expect(page.locator('#speed')).toHaveText('000');
   await page.locator('#accelerate').dispatchEvent('pointerdown',{pointerId:8,pointerType:'touch'});
-  await expect(page.locator('#result-wrap')).toBeVisible({timeout:45_000});
+  await expect(page.locator('#result-wrap')).toBeVisible({timeout:90_000});
   await page.locator('#accelerate').dispatchEvent('pointerup',{pointerId:8,pointerType:'touch'});
   await expect(page.locator('#impact-speed')).not.toHaveText('—');
   await expect.poll(async()=>Number((await page.locator('#deformation-energy').textContent())?.replace(/[^\d]/g,''))).toBeGreaterThan(0);
