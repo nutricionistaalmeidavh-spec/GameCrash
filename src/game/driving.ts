@@ -8,11 +8,11 @@ export const EMPTY_INPUT:DriveInput={left:false,right:false,brake:false,throttle
 
 export function wheelLayout(spec:VehicleSpec){
   const brazilian=Boolean(spec.modelFile);
-  const radius=brazilian ? .34 : spec.id==='suv' ? .41 : .36;
+  const radius=spec.wheelRadius??(brazilian ? .34 : spec.id==='suv' ? .41 : .36);
   const rest=.30;
   const axleZ=(spec.wheelbase??spec.size[2]*.63)/2;
-  const y=brazilian ? .34-(spec.size[1]*.53+.08) : -spec.size[1]*.39;
-  return {radius,rest,y,axleZ,halfTrack:spec.size[0]*.49};
+  const y=brazilian ? (spec.wheelCenterY??.34)-(spec.size[1]*.53+.08) : -spec.size[1]*.39;
+  return {radius,rest,y,axleZ,halfTrack:spec.wheelTrack?spec.wheelTrack/2:spec.size[0]*.49};
 }
 
 /** Four suspension rays support a free rigid chassis. No pose or velocity overrides. */

@@ -1,6 +1,7 @@
+import concept from './concept.json' with {type:'json'};
 import {BRAZIL_CARS,BRAZIL_MAPS,type BrazilCarId,type BrazilMapId} from '../brazil/catalog.ts';
 
-export type VehicleId = 'sedan' | 'hatch' | 'suv' | BrazilCarId;
+export type VehicleId = 'sedan' | 'hatch' | 'suv' | 'concept' | BrazilCarId;
 export type SceneryId = 'original' | BrazilMapId;
 export const BRAZIL_SCENERY=BRAZIL_MAPS;
 export const SCENERIES:Record<SceneryId,{label:string;file?:string}>={
@@ -21,9 +22,13 @@ export interface VehicleSpec {
   size: [number, number, number];
   modelFile?:string;
   wheelbase?:number;
+  wheelRadius?:number;
+  wheelTrack?:number;
+  wheelCenterY?:number;
 }
 export interface ScenarioSpec { id: ScenarioId; label: string; icon: string; subtitle: string; z: number }
 export const VEHICLES = {
+  concept:{id:'concept',name:'CONCEPT GT',kind:'CARROCERIA DETALHADA',color:0xa82023,mass:1520,acceleration:13,maxSpeed:270,resistance:1,size:concept.size as [number,number,number],modelFile:'assets/concept/car.glb',wheelbase:concept.wheelbase,wheelRadius:concept.wheelRadius,wheelTrack:concept.wheelTrack,wheelCenterY:concept.wheelCenterY},
   sedan: { id:'sedan', name:'SEDAN GT',kind:'EQUILIBRADO', color:0xe7eff9,mass:1450,acceleration:12.5,maxSpeed:230,resistance:1,size:[1.9,1.12,4.55]},
   hatch: { id:'hatch', name:'HATCH RS',kind:'LEVE & RÁPIDO',color:0x80b2ff,mass:1080,acceleration:15,maxSpeed:250,resistance:0.77,size:[1.78,1.12,3.9]},
   suv: { id:'suv', name:'SUV TITAN',kind:'PESADO & FORTE',color:0xffc16e,mass:2130,acceleration:10,maxSpeed:195,resistance:1.2,size:[2.08,1.48,4.95]},

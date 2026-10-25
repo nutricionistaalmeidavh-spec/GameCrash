@@ -19,7 +19,7 @@ const $={
   damage:element<HTMLSpanElement>('damage'),controls:element<HTMLDivElement>('drive-controls'),
   loading:element<HTMLDivElement>('loading'),fatal:element<HTMLDivElement>('fatal'),fatalMessage:element<HTMLSpanElement>('fatal-message'),
 };
-let currentVehicle:VehicleId='sedan',currentScenario:ScenarioId='wall',currentScenery:SceneryId='original';
+let currentVehicle:VehicleId='concept',currentScenario:ScenarioId='wall',currentScenery:SceneryId='original';
 let resultTimer:number|undefined;
 let soundEnabled=false;
 let lastPhase='ready';

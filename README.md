@@ -80,3 +80,11 @@ A publicação no GitHub Pages é realizada automaticamente pelo workflow de CI 
 - Cenário **120 LOMBADAS**: pista estendida, 120 lombadas físicas renderizadas com instancing, contador de passagem e danos calculados na estrutura. A velocidade escolhida pode causar colapso da suspensão; o teste de conclusão do trajeto usa velocidade moderada.
 - A simulação continua depois de cada lombada; o relatório exibe quantas foram superadas.
 - Sem dependências pagas, sem servidor obrigatório, testado na CI em Chromium e WebKit.
+
+### Concept GT: modelo detalhado e destrutível
+
+O veículo padrão usa **Car Concept**, de **Eric Chadwick / Darmstadt Graphics Group GmbH (2024)**, distribuído sob **CC BY 4.0** pelo [Khronos glTF Sample Assets](https://github.com/KhronosGroup/glTF-Sample-Assets/tree/main/Models/CarConcept). Créditos e condições das marcas estão em `public/assets/concept/`. Não há endosso dos titulares das marcas.
+
+A adaptação conserva interior, motor, materiais e quatro conjuntos de rodas. A carroceria externa se deforma com os nós físicos; o capô pode se soltar, e as rodas seguem a suspensão ou viram fragmentos físicos. Interior central e motor permanecem rígidos. Os parâmetros de massa e desempenho são aproximações para o jogo. A física continua sendo uma estrutura híbrida simplificada, não FEM completo.
+
+O GLB foi reduzido de 213.347 para 66.216 triângulos, com texturas WebP de até 1024 px e tamanho inferior a 5 MB. Todos os recursos são hospedados junto ao jogo, sem serviços pagos. Para reproduzir a otimização, baixe o GLB original da fonte acima e rode `node tools/concept/prepare.mjs /caminho/CarConcept.glb` após `npm ci`. O script normaliza metros, eixo frontal, rodas e gera `src/game/concept.json`. Preserve a hierarquia para editar no Blender.

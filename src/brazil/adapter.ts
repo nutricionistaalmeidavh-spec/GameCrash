@@ -47,6 +47,6 @@ export function disposeBrazilObject(group:THREE.Object3D){
     if(!(obj instanceof THREE.Mesh))return;
     obj.geometry.dispose();
     const mats=Array.isArray(obj.material)?obj.material:[obj.material];
-    mats.forEach(m=>m.dispose());
+    mats.forEach(m=>{for(const value of Object.values(m))if(value instanceof THREE.Texture)value.dispose();m.dispose()});
   });
 }

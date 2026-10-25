@@ -1,8 +1,8 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
 import {VEHICLES,SCENARIOS,fictionalImpact,progressFraction,kmh,clamp,MAX_SPEED_KMH,SPEEDBUMPS,countBumpsPassed,clampSpeedLimit} from '../src/game/rules.ts';
-test('configures 13 vehicles and four crash challenges',()=>{
-  assert.equal(Object.keys(VEHICLES).length,13);
+test('configures 14 vehicles and four crash challenges',()=>{
+  assert.equal(Object.keys(VEHICLES).length,14);
   assert.deepEqual(Object.keys(SCENARIOS).sort(),['blocks','ramp','speedbumps','wall']);
   for (const v of Object.values(VEHICLES)){assert.ok(v.mass>0);assert.ok(v.maxSpeed>0)}
 });
