@@ -1,6 +1,7 @@
 import {test,before} from 'node:test';
 import assert from 'node:assert/strict';
 import {NodeIO} from '@gltf-transform/core';
+import {ALL_EXTENSIONS} from '@gltf-transform/extensions';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat/rapier.es.js';
 import concept from '../src/game/concept.json' with {type:'json'};
@@ -12,7 +13,7 @@ before(async()=>{await RAPIER.init()});
 const assemblyIds=['hood','door-left','door-right','front-bumper','rear-bumper','glass-front','glass-rear','glass-left','glass-right'];
 
 test('Concept GLB contains separate Blender-authored physical assemblies with metadata',async()=>{
-  const io=new NodeIO();const doc=await io.read('public/assets/concept/car.glb');
+  const io=new NodeIO().registerExtensions(ALL_EXTENSIONS);const doc=await io.read('public/assets/concept/car.glb');
   const authored=doc.getRoot().listNodes().filter(n=>typeof n.getExtras().crashPart==='string');
   const ids=authored.map(n=>n.getExtras().crashPart);
   for(const id of assemblyIds)assert.equal(ids.filter(x=>x===id).length,1,'missing or duplicate '+id);
