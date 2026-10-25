@@ -12,11 +12,11 @@ export interface VehicleVisual {
   bodyLength:number;
   debrisRoot:THREE.Group;
   setStructure(structure:VehicleStructure):void;
-  updatePhysics(driving:VehicleDynamics):void;
+  updatePhysics(driving:VehicleDynamics,refreshDeformation?:boolean):void;
   addDamageMeshes(asset:THREE.Group):void;
   adoptAssetWheels(asset:THREE.Group):void;
 }
-interface SkinBinding {mesh:THREE.Mesh;rest:Float32Array;indices:Uint8Array;weights:Float32Array;toLocal:THREE.Matrix4;active:boolean}
+interface SkinBinding {mesh:THREE.Mesh;rest:Float32Array;indices:Uint8Array;weights:Float32Array;unsupported:Uint8Array;toLocal:THREE.Matrix4;active:boolean}
 function shell(parent:THREE.Group,name:string,profiles:Array<[number,number,number,number]>,mat:THREE.MeshStandardMaterial){
   const points:number[]=[],indices:number[]=[];
   for(const [z,width,low,high] of profiles)points.push(-width,low,z,width,low,z,width,high,z,-width,high,z);
@@ -87,6 +87,8 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
   }
   let structure:VehicleStructure|undefined;
   const bindings:SkinBinding[]=[],debrisRoot=new THREE.Group(),released=new Map<string,{group:THREE.Group;fragment:PhysicalFragment}>();
+  let lastOffsets:Float32Array|undefined;
+  let lastBrokenBeams=-1;
   const detachableParts=[
     {id:'hood',z:l*.31,match:/^(hood|BodyHood|BodyHeadlights)/},
     {id:'front-bumper',z:l*.49,match:/^(front.grille|headlamp|front_light|license_plate_front|bumper)/},
@@ -106,7 +108,9 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
       const sum=nearest.reduce((s,n)=>s+1/(.0001+n.d*n.d),0);
       nearest.forEach((n,j)=>{indices[i*4+j]=n.index;weights[i*4+j]=(1/(.0001+n.d*n.d))/sum});
     }
-    bindings.push({mesh,rest,indices,weights,toLocal:toRoot.clone().invert(),active:true});
+    bindings.push({mesh,rest,indices,weights,unsupported:new Uint8Array(p.count),toLocal:toRoot.clone().invert(),active:true});
+    // Late-loaded GLBs must get their first damage deformation even if the cage is unchanged.
+    lastOffsets=undefined;
   }
   function followFragment(id:string,fragment:PhysicalFragment,objects:THREE.Object3D[]){
     if(released.has(id))return;
@@ -122,7 +126,7 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
       structure=value;
       for(const child of root.children)if(!wheels.includes(child as THREE.Group))child.traverse(obj=>{if(obj instanceof THREE.Mesh)remember(obj)});
     },
-    updatePhysics(driving){
+    updatePhysics(driving,refreshDeformation=true){
       if(!structure)return;
       const controller=driving.controller;
       for(let i=0;i<4;i++){
@@ -133,14 +137,22 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
         wheels[i].rotation.set(controller.wheelRotation(i)??0,controller.wheelSteering(i)??0,0,'YXZ');
       }
       const brokenBeams=structure.brokenBeams;
-      const offsets=structure.nodes.map(n=>{const p=structure!.localPosition(n);return {x:p.x-n.rest.x,y:p.y-n.rest.y,z:p.z-n.rest.z}});
-      // Preserve authored smooth normals while the suspension settles.
-      const deformed=brokenBeams>0||structure.damage>5;
-      const point=new THREE.Vector3();
-      for(const binding of bindings){
-        if(!binding.active||!visible(binding.mesh)||(spec.id==='concept'&&!deformed))continue;
-        const {mesh,rest,indices,weights,toLocal}=binding,pos=mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
-        const unsupported=new Uint8Array(pos.count);
+      // Undamaged cars need wheel/suspension animation, not CPU mesh skinning.
+      const deformed=brokenBeams>0||structure.plasticWorkJ>0||structure.damage>5;
+      if(refreshDeformation&&deformed){
+        const offsets=structure.nodes.map(n=>{const p=structure!.localPosition(n);return {x:p.x-n.rest.x,y:p.y-n.rest.y,z:p.z-n.rest.z}});
+        const nextOffsets=new Float32Array(offsets.length*3);
+        let changed=!lastOffsets||lastBrokenBeams!==brokenBeams;
+        for(let i=0;i<offsets.length;i++){
+          const o=offsets[i],k=i*3;
+          nextOffsets[k]=o.x;nextOffsets[k+1]=o.y;nextOffsets[k+2]=o.z;
+          if(!changed&&lastOffsets&&(Math.abs(o.x-lastOffsets[k])>.003||Math.abs(o.y-lastOffsets[k+1])>.003||Math.abs(o.z-lastOffsets[k+2])>.003))changed=true;
+        }
+        if(changed){
+          const point=new THREE.Vector3();
+          for(const binding of bindings){
+            if(!binding.active||!visible(binding.mesh))continue;
+            const {mesh,rest,indices,weights,unsupported,toLocal}=binding,pos=mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
         for(let i=0;i<pos.count;i++){
           let dx=0,dy=0,dz=0,total=0;
           for(let j=0;j<4;j++){
@@ -161,7 +173,14 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
           }
           if(torn)for(let j=1;j<3;j++)pos.setXYZ(i+j,pos.getX(i),pos.getY(i),pos.getZ(i));
         }
-        pos.needsUpdate=true;if(deformed)mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingSphere();mesh.geometry.computeBoundingBox();
+            pos.needsUpdate=true;
+            mesh.geometry.computeVertexNormals();
+            mesh.geometry.computeBoundingSphere();
+            mesh.geometry.computeBoundingBox();
+          }
+          lastOffsets=nextOffsets;
+          lastBrokenBeams=brokenBeams;
+        }
       }
       root.updateMatrixWorld(true);
       if(structure.brokenBeams>0)for(const part of detachableParts){

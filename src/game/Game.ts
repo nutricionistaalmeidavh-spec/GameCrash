@@ -1,5 +1,6 @@
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {loadConcept} from './concept';
+import {AdaptiveRenderQuality} from './quality';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {buildTrack,type Track} from './track';
@@ -50,13 +51,18 @@ export class Game {
   private hadAir=false;
   private viewMode:0|1=0;
   private raf=0;
+  private deformationElapsed=0;
+  private readonly quality:AdaptiveRenderQuality;
   private readonly timestep=PHYSICS_DT;
   private readonly boxPosition=new THREE.Vector3();
   private readonly heading=new THREE.Vector3();
   private readonly cameraTarget=new THREE.Vector3();
   constructor(private canvas:HTMLCanvasElement,private options:GameOptions){
+    const coarsePointer=window.matchMedia?.('(pointer: coarse)').matches??false;
+    this.quality=new AdaptiveRenderQuality(coarsePointer||window.innerWidth<700);
+    canvas.dataset.renderProfile=this.quality.mobile?'mobile':'desktop';
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
-    this.renderer.setPixelRatio(Math.min(1.7,window.devicePixelRatio||1));
+    this.renderer.setPixelRatio(this.quality.configure(window.innerWidth,window.innerHeight,window.devicePixelRatio||1));
     this.renderer.shadowMap.enabled=true;
     this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
@@ -71,7 +77,7 @@ export class Game {
     const hemi=new THREE.HemisphereLight(0xe7efff,0x53624b,2.05);this.scene.add(hemi);
     const sun=new THREE.DirectionalLight(0xfff3d9,2.1);
     sun.position.set(-60,100,80);sun.castShadow=true;
-    sun.shadow.mapSize.set(1024,1024);
+    sun.shadow.mapSize.set(this.quality.shadowMapSize,this.quality.shadowMapSize);
     sun.shadow.camera.left=-38;sun.shadow.camera.right=38;sun.shadow.camera.top=38;sun.shadow.camera.bottom=-38;
     sun.shadow.normalBias=.038;this.scene.add(sun);
     this.camera.position.set(6,5,-13);
@@ -150,14 +156,14 @@ export class Game {
     for(let i=0;i<120;i++){this.driving.update(EMPTY_INPUT,this.speedLimitKmh);this.world.step()}
     this.queue.drainCollisionEvents(()=>{});
     this.phase='ready';this.controls={left:false,right:false,brake:false,throttle:false};
-    this.hitSpeed=0;this.hadAir=false;this.accumulator=0;this.lastBumpIndex=0;
+    this.hitSpeed=0;this.hadAir=false;this.accumulator=0;this.deformationElapsed=0;this.lastBumpIndex=0;
     this.pendingResult=undefined;this.crashReport=undefined;this.orbitYaw=0;this.orbitPitch=0;this.drag=undefined;this.playback=.32;
     this.elapsed=0;this.overturnedTime=0;this.integrity=100;
     const position=this.body.translation();this.visual.root.position.set(position.x,position.y,position.z);
     this.camera.position.set(5,5.5,-12);this.cameraTarget.set(0,position.y,6);
     this.options.onTelemetry({phase:'ready',speed:0,distance:0,integrity:100,progress:0,bumpsPassed:0});
   }
-  private readonly resize=()=>{const w=window.innerWidth,h=window.innerHeight;this.renderer.setSize(w,h,false);this.camera.aspect=w/Math.max(1,h);this.camera.fov=w<700?66:55;this.camera.updateProjectionMatrix()};
+  private readonly resize=()=>{const w=window.innerWidth,h=window.innerHeight;this.renderer.setPixelRatio(this.quality.configure(w,h,window.devicePixelRatio||1));this.renderer.setSize(w,h,false);this.camera.aspect=w/Math.max(1,h);this.camera.fov=w<700?66:55;this.camera.updateProjectionMatrix()};
   private step(){
     if(this.phase==='ready')return;
     const dt=this.timestep;
@@ -229,8 +235,10 @@ export class Game {
   }
   private frame=()=>{
     this.raf=requestAnimationFrame(this.frame);
-    const dt=Math.min(.07,this.clock.getDelta());
+    const rawDt=this.clock.getDelta();
+    const dt=Math.min(.07,rawDt);
     if(document.hidden){this.accumulator=0;return}
+    if(this.quality.observe(rawDt*1000))this.renderer.setPixelRatio(this.quality.pixelRatio);
     const timeScale=this.phase==='crashed'?this.playback:1;
     this.accumulator+=dt*timeScale;
     let safety=0;
@@ -241,7 +249,12 @@ export class Game {
       const q=this.body.rotation();
       this.visual.root.position.set(t.x,t.y,t.z);
       this.visual.root.quaternion.set(q.x,q.y,q.z,q.w);
-      this.visual.updatePhysics(this.driving);
+      // Wheels and debris follow every rendered frame. Expensive body skinning runs
+      // only at the selected visual rate; Rapier still integrates at 120 Hz.
+      this.deformationElapsed+=dt;
+      const refreshDeformation=this.deformationElapsed>=this.quality.deformationInterval;
+      if(refreshDeformation)this.deformationElapsed=0;
+      this.visual.updatePhysics(this.driving,refreshDeformation);
       // Follow the heading with a level horizon; let the chassis visibly pitch and roll.
       this.heading.set(0,0,1).applyQuaternion(this.visual.root.quaternion).setY(0);
       if(this.heading.lengthSq()<.1)this.heading.set(0,0,1);else this.heading.normalize();
