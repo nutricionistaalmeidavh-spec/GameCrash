@@ -54,7 +54,7 @@ function texture(kind:SurfaceKind,seed:number,roughness=false){
 }
 
 export function createSurfaceTextures(trackLength:number,profile:GraphicsProfile='auto'){
-  const multiplier=profile==='eco'?1.6:profile==='ultra'?.65:1;
+  const multiplier=profile==='eco'?1.6:profile==='ultra'?0.65:1;
   const roadColor=texture('asphalt',11),roadRoughness=texture('asphalt',11,true);
   const gravelColor=texture('gravel',41),grassColor=texture('grass',71);
   roadColor.repeat.set(2,Math.max(1,trackLength/(8*multiplier)));
@@ -120,8 +120,10 @@ export class ImpactParticles {
   readonly mesh:THREE.Points<THREE.BufferGeometry,THREE.PointsMaterial>;
   private particles:Particle[];
   private cursor=0;
+  readonly capacity:number;
   private readonly sprite=radialSprite();
-  constructor(readonly capacity=42){
+  constructor(capacity=42){
+    this.capacity=capacity;
     this.particles=Array.from({length:capacity},()=>({x:0,y:-100000,z:0,vx:0,vy:0,vz:0,life:0,maxLife:1,spark:false}));
     const geometry=new THREE.BufferGeometry();
     const pos=new Float32Array(capacity*3),colors=new Float32Array(capacity*3);
