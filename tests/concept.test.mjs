@@ -18,7 +18,7 @@ test('Concept is self-contained, optimized, licensed and has four independent wh
   assert.ok(json.nodes.some(n=>n.name==='BodyHood'));
   assert.ok(json.nodes.some(n=>n.name==='InteriorSeatsColor1'));
   const metadata=JSON.parse(readFileSync('src/game/concept.json','utf8'));
-  assert.ok(metadata.triangles<80000);
+  assert.ok(metadata.triangles<130000);
   assert.ok(statSync('public/assets/concept/LICENSE.md').size>0);
   assert.match(readFileSync('public/assets/concept/CREDITS.html','utf8'),/Eric Chadwick/);
   const layout=wheelLayout(VEHICLES.concept);

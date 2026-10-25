@@ -106,6 +106,7 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
   }
   let structure:VehicleStructure|undefined;
   const bindings:SkinBinding[]=[],debrisRoot=new THREE.Group(),released=new Map<string,{group:THREE.Group;fragment:PhysicalFragment}>();
+  const assetParts=new Map<string,THREE.Object3D>();
   let lastOffsets:Float32Array|undefined;
   let lastBrokenBeams=-1;
   const detachableParts=[
@@ -190,7 +191,12 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
         }
       }
       root.updateMatrixWorld(true);
-      if(structure.brokenBeams>0)for(const part of detachableParts){
+      // Detach only the mesh assembly released by the physical solver.
+      for(const [id,object] of assetParts){
+        const fragment=structure.fragments.find(f=>f.id===id);
+        if(fragment&&!released.has(id))followFragment(id,fragment,[object]);
+      }
+      if(spec.id!=='concept'&&structure.brokenBeams>0)for(const part of detachableParts){
         const fragment=structure.fragments.find(f=>f.id===part.id);
         if(released.has(part.id)||!fragment)continue;
         const selected=bindings.filter(b=>b.active&&visible(b.mesh)&&part.match.test(b.mesh.name)&&Math.sign(b.rest[2])===Math.sign(part.z));
@@ -217,11 +223,12 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
     },
     addDamageMeshes(asset){
       asset.traverse(obj=>{
+        if(typeof obj.userData.crashPart==='string')assetParts.set(obj.userData.crashPart,obj);
         if(obj instanceof THREE.Mesh&&!obj.name.startsWith('wheel_')&&(spec.id!=='concept'||/^(Body|InteriorDoor)/.test(obj.name))){
           remember(obj);
           // A model that arrives after a crash must not restore a detached panel.
           const binding=bindings.find(b=>b.mesh===obj);
-          if(binding)for(const part of detachableParts)if(structure?.fragments.some(f=>f.id===part.id)&&part.match.test(obj.name)&&Math.sign(binding.rest[2])===Math.sign(part.z))obj.visible=false;
+          if(binding&&spec.id!=='concept')for(const part of detachableParts)if(structure?.fragments.some(f=>f.id===part.id)&&part.match.test(obj.name)&&Math.sign(binding.rest[2])===Math.sign(part.z))obj.visible=false;
         }
       });
     }
