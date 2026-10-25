@@ -37,9 +37,19 @@ function box(parent:THREE.Object3D,name:string,size:[number,number,number],at:[n
 export function createVehicle(spec:VehicleSpec):VehicleVisual{
   const root=new THREE.Group();
   const [w,h,l]=spec.size;
-  const paint=material(spec.color,0.28,0.33),paintLight=material(spec.color,0.32,0.22);
-  const black=material(0x121821,0.83,0.04),glass=material(0x20394d,0.1,0.3),chrome=material(0xc4d7df,0.21,0.7);
-  const taillight=material(0xff3847,0.16),headlight=material(0xf2faff,0.18);
+  // Clear-coated automotive lacquer and reflective tinted glazing (no costly transmission pass).
+  const paint=new THREE.MeshPhysicalMaterial({color:spec.color,metalness:.56,roughness:.23,
+    clearcoat:.91,clearcoatRoughness:.13,envMapIntensity:1.32});
+  const paintLight=new THREE.MeshPhysicalMaterial({color:spec.color,metalness:.49,roughness:.28,
+    clearcoat:.82,clearcoatRoughness:.17,envMapIntensity:1.25});
+  const black=material(0x10151b,.89,.03);
+  const glass=new THREE.MeshPhysicalMaterial({color:0x24394b,metalness:.21,roughness:.075,
+    clearcoat:1,clearcoatRoughness:.065,envMapIntensity:1.6});
+  const chrome=material(0xc4d7df,.17,.84);
+  const taillight=new THREE.MeshPhysicalMaterial({color:0xdd2136,roughness:.18,metalness:.04,
+    clearcoat:1,emissive:0x3f020a,emissiveIntensity:.18});
+  const headlight=new THREE.MeshPhysicalMaterial({color:0xeefff9,roughness:.095,metalness:.14,
+    clearcoat:1,emissive:0xc1ecff,emissiveIntensity:.22});
   const panels:VehicleVisual['panels']=[];
   // The vehicle's +Z axis is its front; models are generated locally.
   panels.push(shell(root,'body',[
@@ -58,12 +68,20 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
   for(const side of [-1,1]){
     box(root,'side-skirt',[.08,.24,l*.72],[side*w*.48,-h*.29,0],black);
     box(root,'door-line',[.025,.017,roofLength*.79],[side*w*.501,-h*.04,0],chrome);
-    box(root,'mirror',[.20,.12,.24],[side*w*.53,h*.37,l*.09],black);
+    box(root,'mirror',[.20,.12,.24],[side*w*.53,h*.37,l*.09],paintLight);
+    box(root,'mirror-glass',[.024,.082,.16],[side*w*.535,h*.37,l*.035],glass);
+    for(const z of [-l*.16,l*.10])
+      box(root,'door-handle',[.026,.042,.20],[side*w*.507,h*.015,z],chrome);
+    box(root,'sill-chrome',[.026,.018,l*.56],[side*w*.502,-h*.16,-l*.01],chrome);
     box(root,'window-pillar',[.06,h*.53,.08],[side*w*.375,h*.32,-.15],paint);
     box(root,'headlamp',[w*.20,.14,.075],[side*w*.35,-h*.11,l*.505],headlight);
     box(root,'brake-lamp',[w*.21,.12,.075],[side*w*.35,-h*.1,-l*.505],taillight);
   }
   box(root,'front-grille',[w*.46,.20,.08],[0,-h*.29,l*.503],black);
+  for(let i=0;i<4;i++)
+    box(root,'grille-fin',[w*.42,.012,.083],[0,-h*.37+i*h*.05,l*.51],chrome);
+  for(const side of [-1,1])
+    box(root,'wiper',[w*.28,.018,.025],[side*w*.18,h*.11,l*.096],black);
   box(root,'rear-bumper',[w*.77,.16,.10],[0,-h*.34,-l*.51],black);
   const wheels:THREE.Group[]=[];
   const tire=material(0x0b1016,.98,.0);
