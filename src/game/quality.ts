@@ -1,4 +1,11 @@
 import type {GraphicsProfile} from './visuals.ts';
+/** SwiftShader and llvmpipe render on the CPU; keep them on the low-cost path.
+ *  Real phone and desktop GPUs remain on the adaptive visual budget.
+ */
+export function isSoftwareRenderer(name:string):boolean{
+  return /swiftshader|llvmpipe|software renderer|softpipe|mesa x11/i.test(name);
+}
+
 
 /**
  * Dynamic *rendering* budget. Physics remains fixed at 120 Hz regardless of device,
