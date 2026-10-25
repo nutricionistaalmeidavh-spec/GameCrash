@@ -3,19 +3,22 @@ import RAPIER from '@dimforge/rapier3d-compat';
 import type {ScenarioId} from './rules';
 import {SCENARIOS,SPEEDBUMPS} from './rules';
 import {bumpShape} from './bump';
+import {createSurfaceTextures,type GraphicsProfile} from './visuals';
 
 const mat=(color:number,roughness=1,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
 function addBox(root:THREE.Group,size:[number,number,number],pos:[number,number,number],material:THREE.Material){
   const mesh=new THREE.Mesh(new THREE.BoxGeometry(...size),material);mesh.position.set(...pos);mesh.castShadow=true;mesh.receiveShadow=true;root.add(mesh);return mesh;
 }
 export interface Track {root:THREE.Group; obstacleHandles:Set<number>; dispose():void}
-export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:ScenarioId):Track{
+export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:ScenarioId,profile:GraphicsProfile='auto'):Track{
   const root=new THREE.Group();scene.add(root);
   const obstacleHandles=new Set<number>();
-  const grass=mat(0x566c4d),road=mat(0x333a42),shoulder=mat(0x667078),stripe=mat(0xd5dce0),yellow=mat(0xe5c468);
   const roadEnd=scenario==='speedbumps'?SPEEDBUMPS.finishZ+100:675;
   const roadCenter=(roadEnd-65)/2;
   const roadLength=roadEnd+65;
+  const surfaces=createSurfaceTextures(roadLength,profile);
+  const {road,grass,shoulder}=surfaces;
+  const stripe=mat(0xd4d5cf,.7),yellow=mat(0xe9c664,.73);
   addBox(root,[520,.12,roadLength],[0,-.1,roadCenter],grass).castShadow=false;
   addBox(root,[25,.08,roadLength],[0,.01,roadCenter],shoulder).castShadow=false;
   addBox(root,[19,.085,roadLength],[0,.03,roadCenter],road).castShadow=false;
@@ -48,7 +51,21 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
     dummy.position.set(x,5.4*sc,z);dummy.updateMatrix();leafBatch.setMatrixAt(i,dummy.matrix);
     dummy.position.set(x,4.3*sc,z+1.8);dummy.scale.setScalar(sc*.75);dummy.updateMatrix();leafBatch2.setMatrixAt(i,dummy.matrix);
   }
-  trunkBatch.castShadow=true;leafBatch.castShadow=true;root.add(trunkBatch,leafBatch,leafBatch2);
+  trunkBatch.castShadow=profile==='ultra';leafBatch.castShadow=profile==='ultra';
+  root.add(trunkBatch,leafBatch,leafBatch2);
+  // Instanced Brazilian roadside lighting columns: detail without dozens of draw calls.
+  const poleCount=scenario==='speedbumps'?78:34;
+  const poleMaterial=mat(0x89969a,.55,.37);
+  const fixtureMaterial=mat(0xf2f0da,.28,.12);
+  const poles=new THREE.InstancedMesh(new THREE.CylinderGeometry(.075,.12,7.2,6),poleMaterial,poleCount);
+  const lamps=new THREE.InstancedMesh(new THREE.BoxGeometry(1.3,.14,.36),fixtureMaterial,poleCount);
+  for(let i=0;i<poleCount;i++){
+    const side=i%2===0?1:-1,offset=side*15.7,z=26+i*(roadEnd/poleCount);
+    dummy.scale.set(1,1,1);dummy.position.set(offset,3.6,z);dummy.rotation.set(0,0,0);dummy.updateMatrix();poles.setMatrixAt(i,dummy.matrix);
+    dummy.position.set(offset-side*.5,7.15,z);dummy.updateMatrix();lamps.setMatrixAt(i,dummy.matrix);
+  }
+  poles.instanceMatrix.needsUpdate=true;lamps.instanceMatrix.needsUpdate=true;
+  root.add(poles,lamps);
   const rock=mat(0x72837a);
   for(let i=0;i<13;i++){
     const mountain=new THREE.Mesh(new THREE.ConeGeometry(44+i%3*12,40+i%4*8,5),rock);
@@ -113,6 +130,7 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
   }
   return {root,obstacleHandles,dispose(){
     scene.remove(root);
+    surfaces.dispose();
     root.traverse((obj)=>{
       if(obj instanceof THREE.Mesh||obj instanceof THREE.InstancedMesh){obj.geometry.dispose();
         const mm=obj.material; if(Array.isArray(mm))mm.forEach(m=>m.dispose());else mm.dispose();}
