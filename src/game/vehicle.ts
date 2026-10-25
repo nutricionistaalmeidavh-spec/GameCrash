@@ -134,7 +134,8 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
       }
       const brokenBeams=structure.brokenBeams;
       const offsets=structure.nodes.map(n=>{const p=structure!.localPosition(n);return {x:p.x-n.rest.x,y:p.y-n.rest.y,z:p.z-n.rest.z}});
-      const deformed=brokenBeams>0||offsets.some(p=>Math.hypot(p.x,p.y,p.z)>.015);
+      // Preserve authored smooth normals while the suspension settles.
+      const deformed=brokenBeams>0||structure.damage>5;
       const point=new THREE.Vector3();
       for(const binding of bindings){
         if(!binding.active||!visible(binding.mesh))continue;
