@@ -3,6 +3,7 @@
  * viewport resolution, dropped frames, or this governor's decisions.
  */
 export class AdaptiveRenderQuality {
+  readonly mobile:boolean;
   readonly shadowMapSize:number;
   readonly deformationInterval:number;
   private readonly maxPixels:number;
@@ -14,7 +15,8 @@ export class AdaptiveRenderQuality {
   private slowFrames=0;
   private fastFrames=0;
 
-  constructor(readonly mobile:boolean){
+  constructor(mobile:boolean){
+    this.mobile=mobile;
     this.maxPixels=mobile?1_350_000:2_500_000;
     this.maxRatio=mobile?1.75:2;
     this.shadowMapSize=mobile?512:1024;
