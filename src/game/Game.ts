@@ -2,6 +2,7 @@ import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {loadConcept} from './concept';
 import {AdaptiveRenderQuality,isSoftwareRenderer} from './quality';
 import {createAtmosphere,ImpactParticles,type GraphicsProfile} from './visuals';
+import {CameraFollower} from './camera';
 import {bumpRunOutcome,INSTANT_ACCELERATOR_KMH} from './arcade';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -59,9 +60,10 @@ export class Game {
   private deformationElapsed=0;
   private readonly quality:AdaptiveRenderQuality;
   private readonly timestep=PHYSICS_DT;
-  private readonly boxPosition=new THREE.Vector3();
-  private readonly heading=new THREE.Vector3();
-  private readonly cameraTarget=new THREE.Vector3();
+  private readonly cameraFollower=new CameraFollower();
+  private readonly cameraBody=new THREE.Vector3();
+  private readonly cameraQuat=new THREE.Quaternion();
+  private readonly cameraVelocity=new THREE.Vector3();
   constructor(private canvas:HTMLCanvasElement,private options:GameOptions){
     const coarsePointer=window.matchMedia?.('(pointer: coarse)').matches??false;
     this.quality=new AdaptiveRenderQuality(coarsePointer||window.innerWidth<700);
@@ -193,7 +195,9 @@ export class Game {
     this.pendingResult=undefined;this.crashReport=undefined;this.orbitYaw=0;this.orbitPitch=0;this.drag=undefined;this.playback=.32;
     this.elapsed=0;this.overturnedTime=0;this.integrity=100;
     const position=this.body.translation();this.visual.root.position.set(position.x,position.y,position.z);
-    this.camera.position.set(5,5.5,-12);this.cameraTarget.set(0,position.y,6);
+    this.cameraFollower.reset(this.cameraBody.set(position.x,position.y,position.z));
+    this.camera.position.copy(this.cameraFollower.position);
+    this.camera.lookAt(this.cameraFollower.target);
     this.options.onTelemetry({phase:'ready',speed:0,distance:0,integrity:100,progress:0,bumpsPassed:0});
   }
   private readonly resize=()=>{const w=window.innerWidth,h=window.innerHeight;this.renderer.setPixelRatio(this.quality.configure(w,h,window.devicePixelRatio||1));this.renderer.setSize(w,h,false);this.camera.aspect=w/Math.max(1,h);this.camera.fov=w<700?66:55;this.camera.updateProjectionMatrix()};
@@ -293,18 +297,18 @@ export class Game {
       const refreshDeformation=this.deformationElapsed>=this.quality.deformationInterval;
       if(refreshDeformation)this.deformationElapsed=0;
       this.visual.updatePhysics(this.driving,refreshDeformation);
-      // Follow the heading with a level horizon; let the chassis visibly pitch and roll.
-      this.heading.set(0,0,1).applyQuaternion(this.visual.root.quaternion).setY(0);
-      if(this.heading.lengthSq()<.1)this.heading.set(0,0,1);else this.heading.normalize();
-      if(this.phase==='crashed')this.heading.applyAxisAngle(new THREE.Vector3(0,1,0),this.orbitYaw);
-      const garage=this.phase==='ready';
-      const side=garage?5:this.viewMode===0?1.5:10,back=garage?7:this.viewMode===0?11:5;
-      this.boxPosition.set(t.x-this.heading.x*back+this.heading.z*side,t.y+4+this.orbitPitch*7,t.z-this.heading.z*back-this.heading.x*side);
-      this.camera.position.lerp(this.boxPosition,Math.min(1,dt*3.8));
-      const ahead=garage?0:5;
-      this.boxPosition.set(t.x+this.heading.x*ahead,t.y+.3,t.z+this.heading.z*ahead);
-      this.cameraTarget.lerp(this.boxPosition,1-Math.exp(-6*dt));
-      this.camera.lookAt(this.cameraTarget);
+      // World-up follow keeps the body centered even at 200 km/h, during a
+      // 180-degree flip, or after an impact. No look-ahead drift or chassis roll.
+      const velocity=this.body.linvel();
+      const follower=this.cameraFollower.update(
+        this.cameraBody.set(t.x,t.y,t.z),
+        this.cameraQuat.set(q.x,q.y,q.z,q.w),
+        this.cameraVelocity.set(velocity.x,velocity.y,velocity.z),
+        dt,this.phase,this.viewMode,this.orbitYaw,this.orbitPitch
+      );
+      this.camera.position.copy(follower.position);
+      this.camera.up.set(0,1,0);
+      this.camera.lookAt(follower.target);
       if(performance.now()-this.lastTelemetry>90){
         const speed=kmh(this.phase==='ready'?0:this.driving.speed);
         this.options.onTelemetry({speed:Math.round(speed),distance:Math.max(0,Math.round(t.z)),integrity:this.integrity,phase:this.phase,progress:progressFraction(t.z,this.scenarioId),bumpsPassed:this.lastBumpIndex});
