@@ -6,7 +6,7 @@ test('carrega a cena WebGL no desktop e no WebKit iPhone',async({page},testInfo)
   await page.goto('/');
   await expect(page.locator('#loading')).toBeHidden({timeout:30_000});
   await expect(page.locator('#fatal')).toBeHidden();
-  await expect(page.locator('#vehicles button')).toHaveCount(13);
+  await expect(page.locator('#vehicles button')).toHaveCount(14);
   await expect(page.locator('#scenarios button')).toHaveCount(4);
   await expect(page.locator('#sceneries button')).toHaveCount(4);
   await expect(page.locator('#accelerate')).toHaveCount(1);
@@ -155,4 +155,25 @@ test('controles cabem no celular em retrato e paisagem',async({page},testInfo)=>
     }
     await testInfo.attach('mobile-'+viewport.width,{body:await page.screenshot({path:testInfo.outputPath('mobile-'+viewport.width+'.png')}),contentType:'image/png'});
   }
+});
+
+test('Concept detalhado carrega, sofre colisão e pode ser recarregado',async({page},testInfo)=>{
+  const errors:string[]=[];
+  page.on('pageerror',error=>errors.push(error.message));
+  await page.goto('/');
+  await expect(page.locator('#loading')).toBeHidden();
+  await expect(page.locator('#game')).toHaveAttribute('data-model','concept');
+  await expect(page.locator('#model-status')).toContainText('modelo detalhado pronto');
+  await testInfo.attach('concept-garage',{body:await page.screenshot(),contentType:'image/png'});
+  await page.locator('#start').click();
+  await expect(page.locator('#game')).toHaveAttribute('data-model','concept');
+  await page.locator('#accelerate').dispatchEvent('pointerdown',{pointerId:48,pointerType:'touch'});
+  await expect(page.locator('#result-wrap')).toBeVisible({timeout:60_000});
+  await page.locator('#accelerate').dispatchEvent('pointerup',{pointerId:48,pointerType:'touch'});
+  await expect.poll(async()=>Number((await page.locator('#deformation-energy').textContent())?.replace(/[^\d]/g,''))).toBeGreaterThan(0);
+  await page.locator('#inspect').click();
+  await testInfo.attach('concept-crash',{body:await page.screenshot(),contentType:'image/png'});
+  await page.locator('#garage').click();
+  await expect(page.locator('#game')).toHaveAttribute('data-model','concept');
+  expect(errors).toEqual([]);
 });

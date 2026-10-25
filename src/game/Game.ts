@@ -1,3 +1,5 @@
+import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {loadConcept} from './concept';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {buildTrack,type Track} from './track';
@@ -12,6 +14,7 @@ export interface GameOptions {onTelemetry(value:Telemetry):void;onResult(result:
 export interface Controls {left:boolean;right:boolean;brake:boolean;throttle:boolean}
 export class Game {
   private renderer:THREE.WebGLRenderer;
+  private environment:THREE.WebGLRenderTarget;
   private scene=new THREE.Scene();
   private camera=new THREE.PerspectiveCamera(55,1,.05,1500);
   private clock=new THREE.Clock();
@@ -23,7 +26,7 @@ export class Game {
   private track!:Track;
   private visual!:VehicleVisual;
   private phase:GamePhase='ready';
-  private vehicleId:VehicleId='sedan';
+  private vehicleId:VehicleId='concept';
   private scenarioId:ScenarioId='wall';
   private sceneryId:SceneryId='original';
   private scenery?:THREE.Group;
@@ -57,7 +60,12 @@ export class Game {
     this.renderer.shadowMap.enabled=true;
     this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure=1.43;
+    this.renderer.toneMappingExposure=1.1;
+    const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();
+    this.environment=pmrem.fromScene(room,.04);
+    this.scene.environment=this.environment.texture;
+    this.scene.environmentIntensity=.65;
+    room.dispose();pmrem.dispose();
     this.scene.background=new THREE.Color(0x9caeb2);
     this.scene.fog=new THREE.FogExp2(0x9caeb2,.0038);
     const hemi=new THREE.HemisphereLight(0xe7efff,0x53624b,2.05);this.scene.add(hemi);
@@ -100,7 +108,7 @@ export class Game {
     if(this.track)this.track.dispose();
     if(this.visual){
       this.scene.remove(this.visual.root,this.visual.debrisRoot);
-      for(const root of [this.visual.root,this.visual.debrisRoot])root.traverse((obj)=>{if(obj instanceof THREE.Mesh){obj.geometry.dispose(); const m=obj.material; if(Array.isArray(m))m.forEach(x=>x.dispose());else m.dispose()}});
+      for(const root of [this.visual.root,this.visual.debrisRoot])disposeBrazilObject(root);
     }
     if(this.world)this.world.free();
     if(this.queue)this.queue.free();
@@ -111,8 +119,11 @@ export class Game {
     const spec=VEHICLES[this.vehicleId];
     this.visual=createVehicle(spec);this.scene.add(this.visual.root,this.visual.debrisRoot);
     const visual=this.visual;
+    this.canvas.dataset.model=spec.modelFile?'loading':'procedural';
+    const status=document.getElementById('model-status');
+    if(status)status.textContent=spec.modelFile?'Carregando carro detalhado…':'';
     if(spec.modelFile){
-      void loadBrazilCar(this.vehicleId as BrazilCarId).then(asset=>{
+      void (spec.id==='concept'?loadConcept():loadBrazilCar(this.vehicleId as BrazilCarId)).then(asset=>{
         if(this.resourceRevision!==revision || visual!==this.visual){disposeBrazilObject(asset);return}
         // The existing Rapier body is centered on the chassis; GLBs use ground-relative Y.
         asset.position.y=-(spec.size[1]*.53+.08);
@@ -120,8 +131,11 @@ export class Game {
         visual.root.children.forEach(obj=>obj.visible=visual.wheels.includes(obj as THREE.Group));
         asset.traverse(obj=>{if(obj.name.startsWith('wheel_'))obj.visible=false});
         visual.root.add(asset);this.carAsset=asset;
+        if(spec.id==='concept')visual.adoptAssetWheels(asset);
         visual.addDamageMeshes(asset);
-      }).catch(error=>console.warn('Carro brasileiro: usando modelo de reserva',error));
+        this.canvas.dataset.model=spec.id;
+        if(status)status.textContent=spec.id==='concept'?'Concept GT · modelo detalhado pronto':'';
+      }).catch(error=>{if(this.resourceRevision!==revision)return;this.canvas.dataset.model='fallback';if(status)status.textContent='Falha ao carregar carro detalhado. Reabra a garagem para tentar novamente.';console.warn('Carro: usando modelo de reserva',error)});
     }
     if(this.sceneryId!=='original'){
       void loadBrazilScenery(this.sceneryId as BrazilMapId).then(map=>{
@@ -232,10 +246,12 @@ export class Game {
       this.heading.set(0,0,1).applyQuaternion(this.visual.root.quaternion).setY(0);
       if(this.heading.lengthSq()<.1)this.heading.set(0,0,1);else this.heading.normalize();
       if(this.phase==='crashed')this.heading.applyAxisAngle(new THREE.Vector3(0,1,0),this.orbitYaw);
-      const side=this.viewMode===0?1.5:10,back=this.viewMode===0?11:5;
+      const garage=this.phase==='ready';
+      const side=garage?5:this.viewMode===0?1.5:10,back=garage?7:this.viewMode===0?11:5;
       this.boxPosition.set(t.x-this.heading.x*back+this.heading.z*side,t.y+4+this.orbitPitch*7,t.z-this.heading.z*back-this.heading.x*side);
       this.camera.position.lerp(this.boxPosition,Math.min(1,dt*3.8));
-      this.boxPosition.set(t.x+this.heading.x*5,t.y+.3,t.z+this.heading.z*5);
+      const ahead=garage?0:5;
+      this.boxPosition.set(t.x+this.heading.x*ahead,t.y+.3,t.z+this.heading.z*ahead);
       this.cameraTarget.lerp(this.boxPosition,1-Math.exp(-6*dt));
       this.camera.lookAt(this.cameraTarget);
       if(performance.now()-this.lastTelemetry>90){
@@ -244,7 +260,13 @@ export class Game {
         this.lastTelemetry=performance.now();
       }
     }
+    // Frame the parked car in the space above the garage controls.
+    const width=window.innerWidth,height=window.innerHeight;
+    const available=this.phase==='ready'?Math.max(160,document.querySelector('.bottom-panel')?.getBoundingClientRect().top??height):height;
+    const aspect=width/available;
+    if(this.camera.aspect!==aspect){this.camera.aspect=aspect;this.camera.updateProjectionMatrix()}
+    this.renderer.setViewport(0,height-available,width,available);
     this.renderer.render(this.scene,this.camera);
   };
-  dispose(){++this.resourceRevision;if(this.scenery){this.scene.remove(this.scenery);disposeBrazilObject(this.scenery)}cancelAnimationFrame(this.raf);window.removeEventListener('resize',this.resize);this.canvas.removeEventListener('pointerdown',this.orbitStart);this.canvas.removeEventListener('pointermove',this.orbitMove);this.canvas.removeEventListener('pointerup',this.orbitEnd);this.canvas.removeEventListener('pointercancel',this.orbitEnd);this.track?.dispose();this.queue?.free();this.world?.free();this.renderer.dispose()}
+  dispose(){++this.resourceRevision;if(this.scenery){this.scene.remove(this.scenery);disposeBrazilObject(this.scenery)}cancelAnimationFrame(this.raf);window.removeEventListener('resize',this.resize);this.canvas.removeEventListener('pointerdown',this.orbitStart);this.canvas.removeEventListener('pointermove',this.orbitMove);this.canvas.removeEventListener('pointerup',this.orbitEnd);this.canvas.removeEventListener('pointercancel',this.orbitEnd);this.track?.dispose();this.queue?.free();this.world?.free();this.environment.dispose();if(this.visual)for(const root of [this.visual.root,this.visual.debrisRoot])disposeBrazilObject(root);this.renderer.dispose()}
 }

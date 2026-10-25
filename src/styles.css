@@ -146,3 +146,5 @@ body[data-phase='crashed'] .inspection-tools{display:flex}
 .result-metrics:has(#result-bumps:not(.hidden)){display:grid}
 #result-bumps{grid-column:1/-1}
 @media(max-width:700px){.inspection-tools{flex-wrap:wrap;justify-content:center}.inspection-tools span{flex-basis:100%;text-align:center;margin-right:0}.result-card{padding:18px}.result-emblem{font-size:40px}.survival{font-size:76px}.result-metrics b{font-size:21px}}
+
+.model-status{font-size:10px;color:#c6d4e0;min-height:14px;margin:3px 0}.asset-credit{float:right;font-size:9px;color:#9fb1c3;text-decoration:underline}

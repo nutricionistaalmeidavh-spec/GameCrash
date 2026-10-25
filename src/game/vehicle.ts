@@ -14,6 +14,7 @@ export interface VehicleVisual {
   setStructure(structure:VehicleStructure):void;
   updatePhysics(driving:VehicleDynamics):void;
   addDamageMeshes(asset:THREE.Group):void;
+  adoptAssetWheels(asset:THREE.Group):void;
 }
 interface SkinBinding {mesh:THREE.Mesh;rest:Float32Array;indices:Uint8Array;weights:Float32Array;toLocal:THREE.Matrix4;active:boolean}
 function shell(parent:THREE.Group,name:string,profiles:Array<[number,number,number,number]>,mat:THREE.MeshStandardMaterial){
@@ -87,7 +88,7 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
   let structure:VehicleStructure|undefined;
   const bindings:SkinBinding[]=[],debrisRoot=new THREE.Group(),released=new Map<string,{group:THREE.Group;fragment:PhysicalFragment}>();
   const detachableParts=[
-    {id:'hood',z:l*.31,match:/^hood/},
+    {id:'hood',z:l*.31,match:/^(hood|BodyHood|BodyHeadlights)/},
     {id:'front-bumper',z:l*.49,match:/^(front.grille|headlamp|front_light|license_plate_front|bumper)/},
     {id:'rear-bumper',z:-l*.49,match:/^(rear.bumper|brake.lamp|rear_light|license_plate_rear|bumper)/}
   ];
@@ -131,7 +132,9 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
         wheels[i].position.set(point.x,point.y-(controller.wheelSuspensionLength(i)??layout.rest),point.z);
         wheels[i].rotation.set(controller.wheelRotation(i)??0,controller.wheelSteering(i)??0,0,'YXZ');
       }
+      const brokenBeams=structure.brokenBeams;
       const offsets=structure.nodes.map(n=>{const p=structure!.localPosition(n);return {x:p.x-n.rest.x,y:p.y-n.rest.y,z:p.z-n.rest.z}});
+      const deformed=brokenBeams>0||offsets.some(p=>Math.hypot(p.x,p.y,p.z)>.015);
       const point=new THREE.Vector3();
       for(const binding of bindings){
         if(!binding.active||!visible(binding.mesh))continue;
@@ -150,14 +153,14 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
         // Non-indexed faces can tear without pulling the rest of a panel into long spikes.
         for(let i=0;i<pos.count;i+=3){
           let torn=Boolean(unsupported[i]||unsupported[i+1]||unsupported[i+2]);
-          if(!torn&&structure.brokenBeams>0)for(let j=1;j<3;j++){
+          if(!torn&&brokenBeams>0)for(let j=1;j<3;j++){
             const current=Math.hypot(pos.getX(i)-pos.getX(i+j),pos.getY(i)-pos.getY(i+j),pos.getZ(i)-pos.getZ(i+j));
             const original=Math.hypot(rest[i*3]-rest[(i+j)*3],rest[i*3+1]-rest[(i+j)*3+1],rest[i*3+2]-rest[(i+j)*3+2]);
             if(current>original*2+.3)torn=true;
           }
           if(torn)for(let j=1;j<3;j++)pos.setXYZ(i+j,pos.getX(i),pos.getY(i),pos.getZ(i));
         }
-        pos.needsUpdate=true;mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingSphere();mesh.geometry.computeBoundingBox();
+        pos.needsUpdate=true;if(deformed)mesh.geometry.computeVertexNormals();mesh.geometry.computeBoundingSphere();mesh.geometry.computeBoundingBox();
       }
       root.updateMatrixWorld(true);
       if(structure.brokenBeams>0)for(const part of detachableParts){
@@ -171,9 +174,23 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
         const p=fragment.body.translation(),q=fragment.body.rotation();group.position.set(p.x,p.y,p.z);group.quaternion.set(q.x,q.y,q.z,q.w);
       }
     },
+    adoptAssetWheels(asset){
+      root.updateMatrixWorld(true);
+      for(let i=0;i<4;i++){
+        const assembly=asset.getObjectByName('concept-wheel-'+i);
+        if(!assembly)throw new Error('Roda ausente no Concept: '+i);
+        // Keep the authored pose relative to a neutral pivot, then restore suspension/spin.
+        const pivot=wheels[i],position=pivot.position.clone(),rotation=pivot.quaternion.clone();
+        pivot.children.forEach(child=>child.visible=false);
+        pivot.position.set((i<2?-1:1)*layout.halfTrack,layout.y,(i%2===0?-1:1)*layout.axleZ);
+        pivot.quaternion.identity();root.updateMatrixWorld(true);pivot.attach(assembly);
+        assembly.userData.vehicleWheel=true;
+        pivot.position.copy(position);pivot.quaternion.copy(rotation);
+      }
+    },
     addDamageMeshes(asset){
       asset.traverse(obj=>{
-        if(obj instanceof THREE.Mesh&&!obj.name.startsWith('wheel_')){
+        if(obj instanceof THREE.Mesh&&!obj.name.startsWith('wheel_')&&(spec.id!=='concept'||/^(Body|InteriorDoor)/.test(obj.name))){
           remember(obj);
           // A model that arrives after a crash must not restore a detached panel.
           const binding=bindings.find(b=>b.mesh===obj);

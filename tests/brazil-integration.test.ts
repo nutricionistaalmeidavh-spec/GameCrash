@@ -5,8 +5,8 @@ import {resolve} from 'node:path';
 import {VEHICLES,BRAZIL_SCENERY} from '../src/game/rules.ts';
 import {brazilAssetURL} from '../src/brazil/adapter.ts';
 
-test('ten Brazilian cars can be selected alongside the existing 3',()=>{
-  assert.equal(Object.keys(VEHICLES).length,13);
+test('ten Brazilian cars can be selected alongside the existing four',()=>{
+  assert.equal(Object.keys(VEHICLES).length,14);
   for(const id of ['gol','strada','palio','onix','uno','hb20','fiesta','ka','fox','celta']){
     assert.ok(VEHICLES[id as keyof typeof VEHICLES].modelFile?.endsWith(id+'.glb'));
   }
