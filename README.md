@@ -66,7 +66,7 @@ Licença MIT.
 - Rupturas acontecem no passo fixo da física, independentemente da frequência de renderização. Triângulos sem suporte podem se abrir, evitando esticar painéis entre fragmentos distantes.
 - Após o impacto, é possível dispensar o relatório, arrastar a câmera para inspecionar, pausar ou alterar a velocidade da câmera lenta. O relatório reaberto acompanha o estado atual e mostra rupturas, peças soltas e trabalho de deformação aproximado em kJ.
 
-O GitHub Actions valida também trajetórias físicas com o Rapier real (apoio dos 13 carros, curva, frenagem, voo, lombadas e impacto a 600 km/h). Os testes de navegador usam o build de produção e verificam controles em retrato e paisagem. O jogo e seus recursos são servidos pelo Pages; a simulação interativa roda no dispositivo de cada jogador, sem servidor obrigatório.
+O GitHub Actions valida também trajetórias físicas com o Rapier real (apoio dos 14 carros, curva, frenagem, voo, lombadas e impacto a 600 km/h). Os testes de navegador usam o build de produção e verificam controles em retrato e paisagem. O jogo e seus recursos são servidos pelo Pages; a simulação interativa roda no dispositivo de cada jogador, sem servidor obrigatório.
 
 ## Controles atualizados
 
@@ -87,4 +87,24 @@ O veículo padrão usa **Car Concept**, de **Eric Chadwick / Darmstadt Graphics 
 
 A adaptação conserva interior, motor, materiais e quatro conjuntos de rodas. A carroceria externa se deforma com os nós físicos; o capô pode se soltar, e as rodas seguem a suspensão ou viram fragmentos físicos. Interior central e motor permanecem rígidos. Os parâmetros de massa e desempenho são aproximações para o jogo. A física continua sendo uma estrutura híbrida simplificada, não FEM completo.
 
-O GLB foi reduzido de 213.347 para 66.216 triângulos, com texturas WebP de até 1024 px e tamanho inferior a 5 MB. Todos os recursos são hospedados junto ao jogo, sem serviços pagos. Para reproduzir a otimização, baixe o GLB original da fonte acima e rode `node tools/concept/prepare.mjs /caminho/CarConcept.glb` após `npm ci`. O script normaliza metros, eixo frontal, rodas e gera `src/game/concept.json`. Preserve a hierarquia para editar no Blender.
+O GLB preparado para destruição tem 101.198 triângulos e cerca de 4,3 MB, com texturas WebP de até 1024 px. O aumento sobre a primeira otimização de 66.216 triângulos vem da espessura real e da subdivisão das chapas. Todos os recursos são hospedados junto ao jogo, sem serviços pagos. Para reproduzir a otimização, baixe o GLB original da fonte acima e rode `node tools/concept/prepare.mjs /caminho/CarConcept.glb` após `npm ci`. O script normaliza metros, eixo frontal, rodas e gera `src/game/concept.json`. Preserve a hierarquia para editar no Blender.
+
+
+### Preparação de destruição no Blender e cena de referência
+
+`tools/concept/ConceptCrash.blend` é o arquivo editável, criado com Blender 4.5.3 LTS e texturas empacotadas. O script `tools/concept/author.py` separa nove conjuntos físicos (capô, duas portas, dois para-choques e quatro vidros), cria as quatro caixas de roda internas, aplica espessura de 6 mm às chapas selecionadas e 3 mm aos vidros e subdivide arestas longas das chapas. Interior e motor originais são preservados; o interior central é agrupado por material em tempo de carregamento para reduzir chamadas de desenho. Os pivôs das portas ficam na borda dianteira; abertura por dobradiça ainda não é simulada.
+
+Para reproduzir a partir do GLB original, rode a primeira otimização descrita acima, depois:
+
+```sh
+blender -b --python tools/concept/author.py -- "$PWD/public/assets/concept/car.glb" "$PWD/tools/concept/ConceptCrash.blend" /tmp/ConceptCrash.glb
+node tools/concept/prepare.mjs /tmp/ConceptCrash.glb --prepared
+```
+
+Para exportar uma edição manual do `.blend`, use GLB, Y para cima, modificadores aplicados e propriedades personalizadas (`extras`) habilitadas; preserve `crashPart` e `concept-wheel-0` até `concept-wheel-3`. Reaplique apenas a etapa `--prepared` para conservar a distribuição de vértices. Centros, dimensões e massas dos fragmentos são gerados em `src/game/concept.json`.
+
+A pele usa interpolação contínua entre oito cantos da estrutura e limita a extensão visual das chapas. O rompimento de uma viga não remove triângulos arbitrários: a separação visual ocorre nos conjuntos físicos. Isso reduz pontas e grandes buracos artificiais, mas não equivale a uma análise completa de chapas ou fratura de vidro em estilhaços.
+
+A cena original ganhou asfalto e rugosidade procedurais, guias, drenagem, defensas instanciadas com colisão, vegetação revisada e iluminação de ambiente externo. A sombra acompanha o veículo. Texturas procedurais não usam downloads externos.
+
+`node tools/concept/benchmark.mjs qa/concept` mede carregamento, intervalos de quadros, chamadas de desenho e erros, além de capturar telas. As medições em SwiftShader usam CPU e não representam o desempenho de um iPhone com GPU real. Consulte `qa/concept/benchmark.json` para os números da execução registrada. Os ajustes de renderização mantêm a refração em resolução reduzida e limitam a densidade de pixels a 1,25.

@@ -1,3 +1,4 @@
+import {asphaltMaterial,roadDetails} from './reference';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import type {ScenarioId} from './rules';
@@ -12,8 +13,10 @@ export interface Track {root:THREE.Group; obstacleHandles:Set<number>; dispose()
 export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:ScenarioId):Track{
   const root=new THREE.Group();scene.add(root);
   const obstacleHandles=new Set<number>();
-  const grass=mat(0x566c4d),road=mat(0x333a42),shoulder=mat(0x667078),stripe=mat(0xd5dce0),yellow=mat(0xe5c468);
+  const grass=mat(0x566c4d),shoulder=mat(0x667078),stripe=mat(0xd5dce0),yellow=mat(0xe5c468);
   const roadEnd=scenario==='speedbumps'?SPEEDBUMPS.finishZ+100:675;
+  const road=asphaltMaterial(roadEnd+65);
+  roadDetails(root,roadEnd);
   const roadCenter=(roadEnd-65)/2;
   const roadLength=roadEnd+65;
   addBox(root,[520,.12,roadLength],[0,-.1,roadCenter],grass).castShadow=false;
@@ -31,8 +34,9 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
   }
   root.add(dashes);
   world.createCollider(RAPIER.ColliderDesc.cuboid(260,.3,roadLength/2).setFriction(1),world.createRigidBody(RAPIER.RigidBodyDesc.fixed().setTranslation(0,-.225,roadCenter)));
+  for(const side of [-1,1])obstacleHandles.add(world.createCollider(RAPIER.ColliderDesc.cuboid(.1,.15,roadLength/2).setTranslation(side*12.1,.8,roadCenter).setFriction(.45)).handle);
   const trunk=mat(0x604735),leaf=mat(0x2b5643),leafAlt=mat(0x3b6b49);
-  const trunkGeo=new THREE.CylinderGeometry(.17,.26,2.5,5),canopyGeo=new THREE.ConeGeometry(2.2,6.2,6);
+  const trunkGeo=new THREE.CylinderGeometry(.17,.26,2.5,5),canopyGeo=new THREE.IcosahedronGeometry(2.2,1);
   const trees=scenario==='speedbumps'?202:90;
   const trunkBatch=new THREE.InstancedMesh(trunkGeo,trunk,trees);
   const leafBatch=new THREE.InstancedMesh(canopyGeo,leaf,trees);
@@ -45,7 +49,7 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
     const x=side*spread;
     const sc=.7+((i*31)%11)*.07;
     dummy.position.set(x,1.1*sc,z);dummy.scale.setScalar(sc);dummy.updateMatrix();trunkBatch.setMatrixAt(i,dummy.matrix);
-    dummy.position.set(x,5.4*sc,z);dummy.updateMatrix();leafBatch.setMatrixAt(i,dummy.matrix);
+    dummy.position.set(x,4.8*sc,z);dummy.scale.set(sc,sc*1.55,sc);dummy.updateMatrix();leafBatch.setMatrixAt(i,dummy.matrix);
     dummy.position.set(x,4.3*sc,z+1.8);dummy.scale.setScalar(sc*.75);dummy.updateMatrix();leafBatch2.setMatrixAt(i,dummy.matrix);
   }
   trunkBatch.castShadow=true;leafBatch.castShadow=true;root.add(trunkBatch,leafBatch,leafBatch2);
@@ -115,7 +119,8 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
     scene.remove(root);
     root.traverse((obj)=>{
       if(obj instanceof THREE.Mesh||obj instanceof THREE.InstancedMesh){obj.geometry.dispose();
-        const mm=obj.material; if(Array.isArray(mm))mm.forEach(m=>m.dispose());else mm.dispose();}
+        const mm=obj.material; if(Array.isArray(mm))mm.forEach(m=>m.dispose());else mm.dispose();
+        for(const m of Array.isArray(mm)?mm:[mm])for(const v of Object.values(m))if(v instanceof THREE.Texture)v.dispose();}
     });
   }};
 }

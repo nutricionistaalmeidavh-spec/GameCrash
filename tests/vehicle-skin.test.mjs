@@ -16,13 +16,14 @@ test('visible panels follow physical nodes and rendering neither detaches parts 
   const render=()=>{const p=car.body.translation(),q=car.body.rotation();visual.root.position.set(p.x,p.y,p.z);visual.root.quaternion.set(q.x,q.y,q.z,q.w);visual.updatePhysics(car)};
   try{
     for(let i=0;i<120;i++){car.update(EMPTY_INPUT,600);world.step()}render();
-    const panel=visual.panels[0],before=new Float32Array(panel.geometry.getAttribute('position').array);
+    const panel=visual.panels[0],topology=new Uint16Array(visual.panels[0].geometry.index.array),before=new Float32Array(panel.geometry.getAttribute('position').array);
     for(const body of [car.body,...car.structure.nodes.filter(n=>!n.anchor).map(n=>n.body)])body.setLinvel({x:0,y:0,z:120/3.6},true);
     // Physics runs at 120 Hz independently of the render loop.
     for(let i=0;i<360;i++){car.update(EMPTY_INPUT,600);world.step();if(i%4===0)render()}render();
     const after=new Float32Array(panel.geometry.getAttribute('position').array);
     assert.ok(after.some((value,i)=>Math.abs(value-before[i])>.15),'mesh must change after physical collision');
     assert.ok(car.structure.plasticWorkJ>0);
+    assert.deepEqual(new Uint16Array(panel.geometry.index.array),topology,'rupture must not erase arbitrary triangles from the sheet');
     const partCount=car.structure.fragments.length,bodyCount=world.bodies.len();
     for(let i=0;i<60;i++)render();
     assert.deepEqual(new Float32Array(panel.geometry.getAttribute('position').array),after,'rendering same state must be idempotent');
