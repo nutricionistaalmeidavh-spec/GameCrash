@@ -32,7 +32,7 @@ test('contact with ramp approach does not spawn debris or destroy the body befor
     const position=car.body.translation();
     car.body.setTranslation({x:position.x,y:position.y,z:start},true);
     for(const node of car.structure.nodes)if(!node.anchor){const p=node.body.translation();node.body.setTranslation({x:p.x,y:p.y,z:p.z+start},true)}
-    car.ensureForwardSpeed(160,600,true);
+    car.ensureForwardSpeed(200,600,true);
     let entered=false,highestBeforeTakeoff=0;
     for(let i=0;i<260;i++){
       car.update({...EMPTY_INPUT,throttle:true},600);
