@@ -55,3 +55,9 @@ jobs:
           }
           if(!passed)process.exitCode=1;
           NODE
+      - name: Install browser engines for live playable smoke
+        run: |
+          npm ci --no-audit --no-fund
+          npx playwright install --with-deps chromium webkit
+      - name: Confirm public CDN launches GameCrash in Chromium and iPhone WebKit
+        run: node scripts/check-public-game-browser.mjs
