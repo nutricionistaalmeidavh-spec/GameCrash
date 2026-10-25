@@ -47,3 +47,10 @@ test('resize and invalid timings do not produce NaN or zero-sized render targets
   quality.configure(428,926,3);
   assert.ok(quality.pixelRatio>0);
 });
+
+test('software WebGL detection uses a cheaper GPU budget without misclassifying Apple hardware',()=>{
+  const {isSoftwareRenderer}=await import('../src/game/quality.ts');
+  assert.equal(isSoftwareRenderer('Google SwiftShader'),true);
+  assert.equal(isSoftwareRenderer('Mesa/X.org llvmpipe LLVM 15'),true);
+  assert.equal(isSoftwareRenderer('ANGLE (Apple, Apple M2, OpenGL 4.1)'),false);
+});
