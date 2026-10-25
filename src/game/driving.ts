@@ -63,6 +63,28 @@ export class VehicleDynamics {
   get speed(){const v=this.body.linvel();return Math.hypot(v.x,v.y,v.z)}
   get groundedWheels(){let count=0;for(let i=0;i<4;i++)if(this.controller.wheelIsInContact(i))count++;return count}
 
+  /** Immediate arcade launch/cruise. Adds the same horizontal velocity delta to
+   *  the chassis and every attached deformable node, avoiding a destructive
+   *  chassis-only impulse. Vertical velocity stays physical during jumps.
+   *  Does not lower speed or exceed the user's configured launch cap.
+   */
+  ensureForwardSpeed(minimumKmh:number,limitKmh:number,alongTrack=false){
+    const target=Math.min(Math.max(0,minimumKmh),clampSpeedLimit(limitKmh))/3.6;
+    const q=this.body.rotation();
+    let fx=alongTrack?0:2*(q.x*q.z+q.w*q.y);
+    let fz=alongTrack?1:1-2*(q.x*q.x+q.y*q.y);
+    const length=Math.hypot(fx,fz);
+    if(length<.01||target<=0)return;
+    fx/=length;fz/=length;
+    const v=this.body.linvel(),current=v.x*fx+v.z*fz;
+    const delta=Math.max(0,target-current);
+    if(delta<.01)return;
+    for(const body of [this.body,...this.structure.nodes.filter(n=>!n.anchor&&!n.detached).map(n=>n.body)]){
+      const before=body.linvel();
+      body.setLinvel({x:before.x+fx*delta,y:before.y,z:before.z+fz*delta},true);
+    }
+  }
+
   update(input:DriveInput,limitKmh:number,dt=PHYSICS_DT){
     this.structure.update(dt);
     const speed=Math.abs(this.signedSpeed);

@@ -1,6 +1,7 @@
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {loadConcept} from './concept';
 import {AdaptiveRenderQuality} from './quality';
+import {bumpRunOutcome,INSTANT_ACCELERATOR_KMH} from './arcade';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
 import {buildTrack,type Track} from './track';
@@ -103,7 +104,14 @@ export class Game {
   private readonly orbitStart=(e:PointerEvent)=>{if(this.phase!=='crashed')return;this.drag={id:e.pointerId,x:e.clientX,y:e.clientY};this.canvas.setPointerCapture(e.pointerId)};
   private readonly orbitMove=(e:PointerEvent)=>{if(this.drag?.id!==e.pointerId)return;this.orbitYaw+=(e.clientX-this.drag.x)*.008;this.orbitPitch=clamp(this.orbitPitch+(e.clientY-this.drag.y)*.006,-.3,.8);this.drag={id:e.pointerId,x:e.clientX,y:e.clientY}};
   private readonly orbitEnd=(e:PointerEvent)=>{if(this.drag?.id===e.pointerId)this.drag=undefined};
-  setControls(patch:Partial<Controls>){Object.assign(this.controls,patch)}
+  setControls(patch:Partial<Controls>){
+    const wasAccelerating=this.controls.throttle&&!this.controls.brake;
+    Object.assign(this.controls,patch);
+    // A new accelerator press is an instantaneous 200 km/h arcade launch,
+    // even if the player is already driving; no slow ramp-up.
+    if(this.phase==='running'&&!wasAccelerating&&this.controls.throttle&&!this.controls.brake)
+      this.driving.ensureForwardSpeed(INSTANT_ACCELERATOR_KMH,this.speedLimitKmh,this.scenarioId==='speedbumps');
+  }
   setSpeedLimitKmh(value:number){this.speedLimitKmh=clampSpeedLimit(value)}
   start(){this.reset();this.phase='running'}
   returnToGarage(){this.reset()}
@@ -169,6 +177,10 @@ export class Game {
     const dt=this.timestep;
     const incoming={...this.body.linvel()};
     this.driving.update(this.phase==='running'?this.controls:EMPTY_INPUT,this.speedLimitKmh);
+    // Long arcade challenge: continue at >=200 km/h as long as throttle is
+    // held, while jumps, collisions, structural damage and steering remain live.
+    if(this.phase==='running'&&this.scenarioId==='speedbumps'&&this.controls.throttle&&!this.controls.brake)
+      this.driving.ensureForwardSpeed(INSTANT_ACCELERATOR_KMH,this.speedLimitKmh,true);
     if(this.phase==='running')this.hitSpeed=kmh(this.driving.speed);
     this.world.step(this.queue);
     this.integrity=100-this.driving.structure.damage;
@@ -206,18 +218,14 @@ export class Game {
       const p=this.body.translation();
       const q=this.body.rotation();
       this.overturnedTime=(1-2*(q.x*q.x+q.z*q.z))<.15?this.overturnedTime+dt:0;
-      if(p.y< -6||Math.abs(p.x)>45||this.overturnedTime>3){this.finish(false);return}
       if(this.scenarioId==='speedbumps'){
-        if(Math.abs(p.x)>10){this.finish(false);return}
         const passed=countBumpsPassed(p.z);
-        if(passed>this.lastBumpIndex){
-          this.lastBumpIndex=passed;
-        }
-        if(this.integrity<=0){this.finish(false);return}
-        if(p.z>=SPEEDBUMPS.finishZ)this.finish(true);
-        else if(this.elapsed>120)this.finish(false);
+        if(passed>this.lastBumpIndex)this.lastBumpIndex=passed;
+        const outcome=bumpRunOutcome({...p,integrity:this.integrity,elapsed:this.elapsed,overturnedTime:this.overturnedTime});
+        if(outcome)this.finish(outcome==='complete');
         return;
       }
+      if(p.y< -6||Math.abs(p.x)>45||this.overturnedTime>3){this.finish(false);return}
       if(this.scenarioId==='ramp'){
         if(p.z>SCENARIOS.ramp.z-8&&this.driving.groundedWheels===0)this.hadAir=true;
         if(this.hadAir&&this.driving.groundedWheels>0&&incoming.y< -3.5){impacted=true;this.hitSpeed=kmh(Math.abs(incoming.y))}
