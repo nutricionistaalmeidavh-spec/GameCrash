@@ -1,6 +1,7 @@
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {loadConcept} from './concept';
 import {AdaptiveRenderQuality} from './quality';
+import {createAtmosphere,ImpactParticles,type GraphicsProfile} from './visuals';
 import {bumpRunOutcome,INSTANT_ACCELERATOR_KMH} from './arcade';
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
@@ -19,6 +20,9 @@ export class Game {
   private environment:THREE.WebGLRenderTarget;
   private scene=new THREE.Scene();
   private camera=new THREE.PerspectiveCamera(55,1,.05,1500);
+  private readonly atmosphere=createAtmosphere();
+  private readonly impacts:ImpactParticles;
+  private sun!:THREE.DirectionalLight;
   private clock=new THREE.Clock();
   private world!:RAPIER.World;
   private queue!:RAPIER.EventQueue;
@@ -61,26 +65,30 @@ export class Game {
   constructor(private canvas:HTMLCanvasElement,private options:GameOptions){
     const coarsePointer=window.matchMedia?.('(pointer: coarse)').matches??false;
     this.quality=new AdaptiveRenderQuality(coarsePointer||window.innerWidth<700);
+    this.impacts=new ImpactParticles(this.quality.mobile?26:64);
+    this.scene.add(this.atmosphere,this.impacts.mesh);
     canvas.dataset.renderProfile=this.quality.mobile?'mobile':'desktop';
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(this.quality.configure(window.innerWidth,window.innerHeight,window.devicePixelRatio||1));
     this.renderer.shadowMap.enabled=true;
     this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
-    this.renderer.toneMappingExposure=1.1;
+    this.renderer.toneMappingExposure=1.06;
+    this.renderer.outputColorSpace=THREE.SRGBColorSpace;
     const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();
     this.environment=pmrem.fromScene(room,.04);
     this.scene.environment=this.environment.texture;
     this.scene.environmentIntensity=.65;
     room.dispose();pmrem.dispose();
-    this.scene.background=new THREE.Color(0x9caeb2);
-    this.scene.fog=new THREE.FogExp2(0x9caeb2,.0038);
+    this.scene.background=new THREE.Color(0xc8d7df);
+    this.scene.fog=new THREE.FogExp2(0xc8d7df,.0032);
     const hemi=new THREE.HemisphereLight(0xe7efff,0x53624b,2.05);this.scene.add(hemi);
     const sun=new THREE.DirectionalLight(0xfff3d9,2.1);
     sun.position.set(-60,100,80);sun.castShadow=true;
     sun.shadow.mapSize.set(this.quality.shadowMapSize,this.quality.shadowMapSize);
     sun.shadow.camera.left=-38;sun.shadow.camera.right=38;sun.shadow.camera.top=38;sun.shadow.camera.bottom=-38;
-    sun.shadow.normalBias=.038;this.scene.add(sun);
+    sun.shadow.normalBias=.024;sun.shadow.bias=-.00014;
+    this.sun=sun;this.scene.add(sun);
     this.camera.position.set(6,5,-13);
     window.addEventListener('resize',this.resize);
     canvas.addEventListener('pointerdown',this.orbitStart);
@@ -96,6 +104,15 @@ export class Game {
   selectScenery(id:SceneryId){this.sceneryId=id;this.reset()}
   toggleCamera(){this.viewMode=this.viewMode===0?1:0}
   setImpactPlayback(value:number){this.playback=clamp(value,0,1)}
+  setGraphicsProfile(profile:GraphicsProfile){
+    this.quality.setProfile(profile);
+    this.renderer.setPixelRatio(this.quality.pixelRatio);
+    const size=this.quality.shadowMapSize;
+    this.sun.shadow.mapSize.set(size,size);
+    this.sun.shadow.map?.dispose();this.sun.shadow.map=null;
+    this.renderer.shadowMap.needsUpdate=true;
+    this.canvas.dataset.graphics=profile;
+  }
   resultSnapshot():Result|undefined {
     if(!this.crashReport)return;
     const structure=this.driving.structure,damage=structure.damage;
@@ -129,7 +146,8 @@ export class Game {
     this.world=new RAPIER.World({x:0,y:-9.81,z:0});
     this.world.timestep=this.timestep;
     this.queue=new RAPIER.EventQueue(true);
-    this.track=buildTrack(this.scene,this.world,this.scenarioId);
+    this.track=buildTrack(this.scene,this.world,this.scenarioId,this.quality.profileName);
+    this.impacts.update(8);
     const spec=VEHICLES[this.vehicleId];
     this.visual=createVehicle(spec);this.scene.add(this.visual.root,this.visual.debrisRoot);
     const visual=this.visual;
@@ -216,11 +234,15 @@ export class Game {
       });
       if(impacted&&normalSpeed>0)this.hitSpeed=normalSpeed;
       const p=this.body.translation();
+      if(impacted&&normalSpeed>12)this.impacts.emit(p,Math.min(40,normalSpeed/7));
       const q=this.body.rotation();
       this.overturnedTime=(1-2*(q.x*q.x+q.z*q.z))<.15?this.overturnedTime+dt:0;
       if(this.scenarioId==='speedbumps'){
         const passed=countBumpsPassed(p.z);
-        if(passed>this.lastBumpIndex)this.lastBumpIndex=passed;
+        if(passed>this.lastBumpIndex){
+          this.lastBumpIndex=passed;
+          if(this.driving.speed>9)this.impacts.emit({x:p.x,y:.2,z:p.z},this.quality.mobile?5:9);
+        }
         const outcome=bumpRunOutcome({...p,integrity:this.integrity,elapsed:this.elapsed,overturnedTime:this.overturnedTime});
         if(outcome)this.finish(outcome==='complete');
         return;
@@ -247,6 +269,7 @@ export class Game {
     const dt=Math.min(.07,rawDt);
     if(document.hidden){this.accumulator=0;return}
     if(this.quality.observe(rawDt*1000))this.renderer.setPixelRatio(this.quality.pixelRatio);
+    this.impacts.update(dt);
     const timeScale=this.phase==='crashed'?this.playback:1;
     this.accumulator+=dt*timeScale;
     let safety=0;
@@ -286,8 +309,9 @@ export class Game {
     const available=this.phase==='ready'?Math.max(160,document.querySelector('.bottom-panel')?.getBoundingClientRect().top??height):height;
     const aspect=width/available;
     if(this.camera.aspect!==aspect){this.camera.aspect=aspect;this.camera.updateProjectionMatrix()}
+    this.atmosphere.position.copy(this.camera.position);
     this.renderer.setViewport(0,height-available,width,available);
     this.renderer.render(this.scene,this.camera);
   };
-  dispose(){++this.resourceRevision;if(this.scenery){this.scene.remove(this.scenery);disposeBrazilObject(this.scenery)}cancelAnimationFrame(this.raf);window.removeEventListener('resize',this.resize);this.canvas.removeEventListener('pointerdown',this.orbitStart);this.canvas.removeEventListener('pointermove',this.orbitMove);this.canvas.removeEventListener('pointerup',this.orbitEnd);this.canvas.removeEventListener('pointercancel',this.orbitEnd);this.track?.dispose();this.queue?.free();this.world?.free();this.environment.dispose();if(this.visual)for(const root of [this.visual.root,this.visual.debrisRoot])disposeBrazilObject(root);this.renderer.dispose()}
+  dispose(){++this.resourceRevision;if(this.scenery){this.scene.remove(this.scenery);disposeBrazilObject(this.scenery)}cancelAnimationFrame(this.raf);window.removeEventListener('resize',this.resize);this.canvas.removeEventListener('pointerdown',this.orbitStart);this.canvas.removeEventListener('pointermove',this.orbitMove);this.canvas.removeEventListener('pointerup',this.orbitEnd);this.canvas.removeEventListener('pointercancel',this.orbitEnd);this.track?.dispose();this.queue?.free();this.world?.free();this.environment.dispose();this.impacts.dispose();this.atmosphere.geometry.dispose();this.atmosphere.material.dispose();if(this.visual)for(const root of [this.visual.root,this.visual.debrisRoot])disposeBrazilObject(root);this.renderer.dispose()}
 }
