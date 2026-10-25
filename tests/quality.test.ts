@@ -1,6 +1,6 @@
 import {test} from 'node:test';
 import assert from 'node:assert/strict';
-import {AdaptiveRenderQuality} from '../src/game/quality.ts';
+import {AdaptiveRenderQuality,isSoftwareRenderer} from '../src/game/quality.ts';
 
 test('iPhone uses a bounded render budget while preserving 120 Hz simulation independence',()=>{
   const quality=new AdaptiveRenderQuality(true);
@@ -49,7 +49,6 @@ test('resize and invalid timings do not produce NaN or zero-sized render targets
 });
 
 test('software WebGL detection uses a cheaper GPU budget without misclassifying Apple hardware',()=>{
-  const {isSoftwareRenderer}=await import('../src/game/quality.ts');
   assert.equal(isSoftwareRenderer('Google SwiftShader'),true);
   assert.equal(isSoftwareRenderer('Mesa/X.org llvmpipe LLVM 15'),true);
   assert.equal(isSoftwareRenderer('ANGLE (Apple, Apple M2, OpenGL 4.1)'),false);
