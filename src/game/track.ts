@@ -1,9 +1,10 @@
 import * as THREE from 'three';
-import RAPIER from '@dimforge/rapier3d-compat';
-import type {ScenarioId} from './rules';
-import {SCENARIOS,SPEEDBUMPS} from './rules';
-import {bumpShape} from './bump';
-import {createSurfaceTextures,type GraphicsProfile} from './visuals';
+import * as RAPIER from '@dimforge/rapier3d-compat';
+import type {ScenarioId} from './rules.ts';
+import {SCENARIOS,SPEEDBUMPS} from './rules.ts';
+import {bumpShape} from './bump.ts';
+import {createSurfaceTextures,type GraphicsProfile} from './visuals.ts';
+import {buildRampProfile,rampSegmentVertices} from './ramp.ts';
 
 const mat=(color:number,roughness=1,metalness=0)=>new THREE.MeshStandardMaterial({color,roughness,metalness});
 function addBox(root:THREE.Group,size:[number,number,number],pos:[number,number,number],material:THREE.Material){
@@ -96,8 +97,22 @@ export function buildTrack(scene:THREE.Scene, world:RAPIER.World,scenario:Scenar
     for(let i=0;i<5;i++)addBox(root,[1,.055,2],[-5+i*2.5,.16,z-7],paint);
   }
   if(scenario==='ramp'){
-    const angle=-.24;
-    obstacle(0,1.65,z,9,.85,15,paint,angle,false);
+    // Smooth approach: ground-level entry, then gradual incline. Each visible
+    // wedge uses the *same* coordinates as its Rapier convex collider.
+    const profile=buildRampProfile(z);
+    for(let i=1;i<profile.length;i++){
+      const a=profile[i-1],b=profile[i];
+      const vertices=rampSegmentVertices(a,b);
+      const indices=[0,1,3,0,3,2,4,6,7,4,7,5,0,4,5,0,5,1,2,3,7,2,7,6,0,2,6,0,6,4,1,5,7,1,7,3];
+      const geometry=new THREE.BufferGeometry();
+      geometry.setAttribute('position',new THREE.BufferAttribute(vertices,3));
+      geometry.setIndex(indices);geometry.computeVertexNormals();
+      const mesh=new THREE.Mesh(geometry,paint);
+      mesh.castShadow=false;mesh.receiveShadow=true;root.add(mesh);
+      const collider=RAPIER.ColliderDesc.convexHull(vertices);
+      if(!collider)throw new Error('Rampa inválida');
+      world.createCollider(collider.setFriction(1).setRestitution(0));
+    }
     for(let i=0;i<8;i++)addBox(root,[9,.05,2.5],[0,.11,z+25+i*3.5],i%2===0?concrete:road);
     obstacle(0,1.3,z+68,11,2.6,1.6,concrete);
   }

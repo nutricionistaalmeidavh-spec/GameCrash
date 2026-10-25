@@ -1,5 +1,6 @@
 import * as THREE from 'three';
 import {mergeGeometries} from 'three/addons/utils/BufferGeometryUtils.js';
+import {cageWeights,sheetOffsets} from './skin.ts';
 import type {VehicleSpec} from './rules';
 import {wheelLayout} from './driving.ts';
 import type {VehicleDynamics} from './driving';
@@ -16,7 +17,7 @@ export interface VehicleVisual {
   addDamageMeshes(asset:THREE.Group):void;
   adoptAssetWheels(asset:THREE.Group):void;
 }
-interface SkinBinding {mesh:THREE.Mesh;rest:Float32Array;indices:Uint8Array;weights:Float32Array;unsupported:Uint8Array;toLocal:THREE.Matrix4;active:boolean}
+interface SkinBinding {mesh:THREE.Mesh;rest:Float32Array;indices:Uint8Array;weights:Float32Array;toLocal:THREE.Matrix4;active:boolean}
 function shell(parent:THREE.Group,name:string,profiles:Array<[number,number,number,number]>,mat:THREE.MeshStandardMaterial){
   const points:number[]=[],indices:number[]=[];
   for(const [z,width,low,high] of profiles)points.push(-width,low,z,width,low,z,width,high,z,-width,high,z);
@@ -117,16 +118,15 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
     if(!structure||bindings.some(b=>b.mesh===mesh))return;
     root.updateMatrixWorld(true);
     const original=mesh.geometry;
-    mesh.geometry=original.index?original.toNonIndexed():original.clone();original.dispose();
+    mesh.geometry=original.clone();original.dispose();
     const toRoot=new THREE.Matrix4().copy(root.matrixWorld).invert().multiply(mesh.matrixWorld);
-    const p=mesh.geometry.getAttribute('position'),rest=new Float32Array(p.count*3),indices=new Uint8Array(p.count*4),weights=new Float32Array(p.count*4),v=new THREE.Vector3();
+    const p=mesh.geometry.getAttribute('position'),rest=new Float32Array(p.count*3),indices=new Uint8Array(p.count*8),weights=new Float32Array(p.count*8),v=new THREE.Vector3();
     for(let i=0;i<p.count;i++){
       v.fromBufferAttribute(p,i).applyMatrix4(toRoot);rest.set([v.x,v.y,v.z],i*3);
-      const nearest=structure.nodes.map((n,index)=>({index,d:(n.rest.x-v.x)**2+(n.rest.y-v.y)**2+(n.rest.z-v.z)**2})).sort((a,b)=>a.d-b.d).slice(0,4);
-      const sum=nearest.reduce((s,n)=>s+1/(.0001+n.d*n.d),0);
-      nearest.forEach((n,j)=>{indices[i*4+j]=n.index;weights[i*4+j]=(1/(.0001+n.d*n.d))/sum});
+      const support=cageWeights(structure.nodes,v);
+      indices.set(support.indices,i*8);weights.set(support.weights,i*8);
     }
-    bindings.push({mesh,rest,indices,weights,unsupported:new Uint8Array(p.count),toLocal:toRoot.clone().invert(),active:true});
+    bindings.push({mesh,rest,indices,weights,toLocal:toRoot.clone().invert(),active:true});
     // Late-loaded GLBs must get their first damage deformation even if the cage is unchanged.
     lastOffsets=undefined;
   }
@@ -135,7 +135,7 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
     const group=new THREE.Group(),p=fragment.body.translation(),q=fragment.body.rotation();
     group.position.set(p.x,p.y,p.z);group.quaternion.set(q.x,q.y,q.z,q.w);debrisRoot.add(group);group.updateMatrixWorld(true);
     root.updateMatrixWorld(true);
-    for(const obj of objects){group.attach(obj);for(const b of bindings)if(b.mesh===obj)b.active=false}
+    for(const obj of objects){group.attach(obj);obj.traverse(child=>{for(const b of bindings)if(b.mesh===child)b.active=false})}
     released.set(id,{group,fragment});
   }
   return {
@@ -158,7 +158,7 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
       // Undamaged cars need wheel/suspension animation, not CPU mesh skinning.
       const deformed=brokenBeams>0||structure.plasticWorkJ>0||structure.damage>5;
       if(refreshDeformation&&deformed){
-        const offsets=structure.nodes.map(n=>{const p=structure!.localPosition(n);return {x:p.x-n.rest.x,y:p.y-n.rest.y,z:p.z-n.rest.z}});
+        const offsets=sheetOffsets(structure.nodes,structure.nodes.map(n=>{const p=structure!.localPosition(n);return {x:p.x-n.rest.x,y:p.y-n.rest.y,z:p.z-n.rest.z}}),l*.22);
         const nextOffsets=new Float32Array(offsets.length*3);
         let changed=!lastOffsets||lastBrokenBeams!==brokenBeams;
         for(let i=0;i<offsets.length;i++){
@@ -170,26 +170,15 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
           const point=new THREE.Vector3();
           for(const binding of bindings){
             if(!binding.active||!visible(binding.mesh))continue;
-            const {mesh,rest,indices,weights,unsupported,toLocal}=binding,pos=mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
+            const {mesh,rest,indices,weights,toLocal}=binding,pos=mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
         for(let i=0;i<pos.count;i++){
           let dx=0,dy=0,dz=0,total=0;
-          for(let j=0;j<4;j++){
-            const n=indices[i*4+j],w=weights[i*4+j];if(structure.nodes[n].detached)continue;
+          for(let j=0;j<8;j++){
+            const n=indices[i*8+j],w=weights[i*8+j];
             dx+=offsets[n].x*w;dy+=offsets[n].y*w;dz+=offsets[n].z*w;total+=w;
           }
           point.set(rest[i*3]+dx/Math.max(.001,total),rest[i*3+1]+dy/Math.max(.001,total),rest[i*3+2]+dz/Math.max(.001,total)).applyMatrix4(toLocal);
           pos.setXYZ(i,point.x,point.y,point.z);
-          unsupported[i]=total<.02?1:0;
-        }
-        // Non-indexed faces can tear without pulling the rest of a panel into long spikes.
-        for(let i=0;i<pos.count;i+=3){
-          let torn=Boolean(unsupported[i]||unsupported[i+1]||unsupported[i+2]);
-          if(!torn&&brokenBeams>0)for(let j=1;j<3;j++){
-            const current=Math.hypot(pos.getX(i)-pos.getX(i+j),pos.getY(i)-pos.getY(i+j),pos.getZ(i)-pos.getZ(i+j));
-            const original=Math.hypot(rest[i*3]-rest[(i+j)*3],rest[i*3+1]-rest[(i+j)*3+1],rest[i*3+2]-rest[(i+j)*3+2]);
-            if(current>original*2+.3)torn=true;
-          }
-          if(torn)for(let j=1;j<3;j++)pos.setXYZ(i+j,pos.getX(i),pos.getY(i),pos.getZ(i));
         }
             pos.needsUpdate=true;
             mesh.geometry.computeVertexNormals();
