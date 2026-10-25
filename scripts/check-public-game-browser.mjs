@@ -11,10 +11,23 @@ for (const [name,engine,viewport,options] of [
     const ctx=await browser.newContext({viewport,deviceScaleFactor:2,isMobile:name.startsWith('WebKit'),hasTouch:name.startsWith('WebKit')});
     const page=await ctx.newPage();
     const errors=[];
-    page.on('pageerror',error=>errors.push(error.message));
+    page.on('pageerror',error=>{errors.push(error.message);console.error('PAGE ERROR '+name+': '+error.message)});
+    page.on('console',msg=>{if(msg.type()==='error'||msg.type()==='warning')console.log('CONSOLE '+name+' '+msg.type()+' '+msg.text())});
+    page.on('requestfailed',req=>console.log('REQUEST FAILED '+name+' '+req.url()+' '+req.failure()?.errorText));
+    page.on('response',res=>{if(res.status()>=400)console.log('HTTP '+res.status()+' '+res.url())});
     const response=await page.goto(url,{waitUntil:'domcontentloaded',timeout:35_000});
     assert.equal(response?.status(),200,name+' HTML status');
-    await page.locator('#loading').waitFor({state:'hidden',timeout:55_000});
+    await page.waitForTimeout(5000);
+    console.log('DIAGNOSTIC '+name+' '+JSON.stringify(await page.evaluate(()=>({
+      title:document.title,htmlBytes:document.documentElement.outerHTML.length,
+      loading:document.querySelector('#loading')?.className,
+      phase:document.body.dataset.phase,vehicleCount:document.querySelectorAll('#vehicles button').length,
+      scripts:[...document.scripts].map(x=>({src:x.src,type:x.type})),
+      fatal:document.querySelector('#fatal')?.className,
+      fatalText:document.querySelector('#fatal-message')?.textContent,
+      mainCss:document.querySelector('#app')?getComputedStyle(document.querySelector('#app')).position:null
+    }))));
+    await page.locator('#loading').waitFor({state:'hidden',timeout:35_000});
     await page.locator('#vehicles button').first().waitFor({state:'visible',timeout:30_000});
     const count=await page.locator('#vehicles button').count();
     assert.equal(count,14,name+' vehicle choices');
