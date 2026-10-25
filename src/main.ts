@@ -6,7 +6,7 @@ const element=<T extends HTMLElement>(id:string)=>document.getElementById(id) as
 const $={
   canvas:element<HTMLCanvasElement>('game'),vehicles:element<HTMLDivElement>('vehicles'),scenarios:element<HTMLDivElement>('scenarios'),sceneries:element<HTMLDivElement>('sceneries'),
   start:element<HTMLButtonElement>('start'),retry:element<HTMLButtonElement>('retry'),camera:element<HTMLButtonElement>('camera'),mute:element<HTMLButtonElement>('mute'),
-  garage:element<HTMLButtonElement>('garage'),restart:element<HTMLButtonElement>('restart'),
+  garage:element<HTMLButtonElement>('garage'),restart:element<HTMLButtonElement>('restart'),graphics:element<HTMLButtonElement>('graphics'),
   inspect:element<HTMLButtonElement>('inspect'),report:element<HTMLButtonElement>('report'),slow:element<HTMLButtonElement>('slow-motion'),
   broken:element<HTMLSpanElement>('broken-beams'),parts:element<HTMLSpanElement>('detached-parts'),energy:element<HTMLSpanElement>('deformation-energy'),
   speed:element<HTMLSpanElement>('speed'),speedBar:element<HTMLSpanElement>('speed-bar'),distance:element<HTMLSpanElement>('distance'),
@@ -124,6 +124,17 @@ $.garage.addEventListener('click',()=>{hideResult();releaseInputs();game.returnT
 $.inspect.addEventListener('click',()=>{$.result.classList.add('hidden');$.canvas.focus()});
 $.report.addEventListener('click',()=>{const result=game.resultSnapshot()??lastResult;if(result)showResult(result)});
 $.slow.addEventListener('click',()=>{playbackIndex=(playbackIndex+1)%playback.length;const value=playback[playbackIndex];game.setImpactPlayback(value);$.slow.textContent=value===0?'PAUSADO':`${String(value).replace('.',',')}×`});
+const graphicsProfiles=['auto','eco','high','ultra'] as const;
+const graphicsLabels={auto:'AUTO',eco:'ECO',high:'ALTO',ultra:'ULTRA'} as const;
+let graphicProfileIndex=0;
+$.graphics.addEventListener('click',()=>{
+  graphicProfileIndex=(graphicProfileIndex+1)%graphicsProfiles.length;
+  const profile=graphicsProfiles[graphicProfileIndex];
+  game.setGraphicsProfile(profile);
+  $.graphics.textContent=graphicsLabels[profile];
+  $.graphics.setAttribute('aria-label','Qualidade gráfica: '+graphicsLabels[profile]);
+  $.graphics.setAttribute('aria-pressed',String(profile!=='auto'));
+});
 $.camera.addEventListener('click',()=>game.toggleCamera());
 $.mute.addEventListener('click',()=>{soundEnabled=!soundEnabled;$.mute.classList.toggle('active',soundEnabled);$.mute.title=soundEnabled?'Desativar som':'Ativar som'});
 $.speedLimit.max=String(MAX_SPEED_KMH);

@@ -1,11 +1,23 @@
+import type {GraphicsProfile} from './visuals.ts';
+/** SwiftShader and llvmpipe render on the CPU; keep them on the low-cost path.
+ *  Real phone and desktop GPUs remain on the adaptive visual budget.
+ */
+export function isSoftwareRenderer(name:string):boolean{
+  return /swiftshader|llvmpipe|software renderer|softpipe|mesa x11/i.test(name);
+}
+
+
 /**
  * Dynamic *rendering* budget. Physics remains fixed at 120 Hz regardless of device,
  * viewport resolution, dropped frames, or this governor's decisions.
  */
 export class AdaptiveRenderQuality {
   readonly mobile:boolean;
-  readonly shadowMapSize:number;
-  readonly deformationInterval:number;
+  private profile:GraphicsProfile='auto';
+  get profileName(){return this.profile}
+  setProfile(value:GraphicsProfile){this.profile=value;this.scale=1;this.fastFrames=0;this.slowFrames=0}
+  get shadowMapSize(){return this.profile==='eco'?(this.mobile?256:512):this.profile==='ultra'?(this.mobile?1024:2048):this.mobile?512:1024}
+  get deformationInterval(){return this.profile==='eco'?1/24:this.mobile?1/30:1/60}
   private readonly maxPixels:number;
   private readonly maxRatio:number;
   private width=1;
@@ -19,8 +31,6 @@ export class AdaptiveRenderQuality {
     this.mobile=mobile;
     this.maxPixels=mobile?1_350_000:2_500_000;
     this.maxRatio=mobile?1.75:2;
-    this.shadowMapSize=mobile?512:1024;
-    this.deformationInterval=mobile?1/30:1/60;
   }
   configure(width:number,height:number,deviceRatio:number):number{
     this.width=Number.isFinite(width)?Math.max(1,width):1;
@@ -29,8 +39,10 @@ export class AdaptiveRenderQuality {
     return this.pixelRatio;
   }
   get pixelRatio():number {
-    const maxByBudget=Math.sqrt(this.maxPixels/(this.width*this.height));
-    const ratio=Math.min(this.deviceRatio,this.maxRatio,maxByBudget)*this.scale;
+    const maxPixels=this.profile==='eco'?this.mobile?700_000:1_200_000:this.profile==='ultra'?this.mobile?2_100_000:4_000_000:this.maxPixels;
+    const maxRatio=this.profile==='eco'?1.15:this.profile==='ultra'?this.mobile?2.3:2.5:this.maxRatio;
+    const maxByBudget=Math.sqrt(maxPixels/(this.width*this.height));
+    const ratio=Math.min(this.deviceRatio,maxRatio,maxByBudget)*this.scale;
     // Floor, not round, so the pixel count never exceeds its declared budget.
     return Math.max(.45,Math.floor(ratio*100)/100);
   }
