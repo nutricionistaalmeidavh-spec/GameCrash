@@ -1,6 +1,6 @@
 import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
 import {loadConcept} from './concept';
-import {AdaptiveRenderQuality} from './quality';
+import {AdaptiveRenderQuality,isSoftwareRenderer} from './quality';
 import {createAtmosphere,ImpactParticles,type GraphicsProfile} from './visuals';
 import {bumpRunOutcome,INSTANT_ACCELERATOR_KMH} from './arcade';
 import * as THREE from 'three';
@@ -70,6 +70,12 @@ export class Game {
     canvas.dataset.renderProfile=this.quality.mobile?'mobile':'desktop';
     canvas.dataset.graphics='auto';
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
+    const gl=this.renderer.getContext();
+    const debug=gl.getExtension('WEBGL_debug_renderer_info') as {UNMASKED_RENDERER_WEBGL:number}|null;
+    const rendererName=String(gl.getParameter(debug?.UNMASKED_RENDERER_WEBGL??gl.RENDERER)??'');
+    const softwareRendering=isSoftwareRenderer(rendererName);
+    if(softwareRendering)this.quality.setProfile('eco');
+    canvas.dataset.softwareRendering=String(softwareRendering);
     this.renderer.setPixelRatio(this.quality.configure(window.innerWidth,window.innerHeight,window.devicePixelRatio||1));
     this.renderer.shadowMap.enabled=true;
     this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
@@ -85,7 +91,7 @@ export class Game {
     this.scene.fog=new THREE.FogExp2(0xc8d7df,.0032);
     const hemi=new THREE.HemisphereLight(0xe7efff,0x53624b,2.05);this.scene.add(hemi);
     const sun=new THREE.DirectionalLight(0xfff3d9,2.1);
-    sun.position.set(-60,100,80);sun.castShadow=true;
+    sun.position.set(-60,100,80);sun.castShadow=!softwareRendering;
     sun.shadow.mapSize.set(this.quality.shadowMapSize,this.quality.shadowMapSize);
     sun.shadow.camera.left=-38;sun.shadow.camera.right=38;sun.shadow.camera.top=38;sun.shadow.camera.bottom=-38;
     sun.shadow.normalBias=.024;sun.shadow.bias=-.00014;
