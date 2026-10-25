@@ -36,7 +36,7 @@ for (const [name,engine,viewport,options] of [
     assert.deepEqual(errors,[],name+' no runtime errors');
     await page.locator('[data-vehicle="sedan"]').click();
     await page.locator('#start').click();
-    assert.equal(await page.locator('body').getAttribute('data-phase'),'running',name+' game starts');
+    await page.waitForFunction(()=>document.body.dataset.phase==='running',null,{timeout:25000});
     console.log('LIVE BROWSER PASS: '+name+' from '+url+', CSS '+JSON.stringify(CSS));
     await ctx.close();
   }finally{await browser.close()}
