@@ -1,7 +1,7 @@
 import assert from 'node:assert/strict';
 import {chromium,webkit} from '@playwright/test';
 
-const url='https://rawcdn.githack.com/nutricionistaalmeidavh-spec/GameCrash/d119c750a98771caaf09a43c29c85300d77bfeb4/play/index.html';
+const url='https://gamecrash-3d-ravefe.v2.appdeploy.ai/';
 for (const [name,engine,viewport,options] of [
   ['Chromium desktop',chromium,{width:1280,height:720},{args:['--enable-webgl','--use-gl=angle','--use-angle=swiftshader']}],
   ['WebKit iPhone',webkit,{width:390,height:844},{}],
