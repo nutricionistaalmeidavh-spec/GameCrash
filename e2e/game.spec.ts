@@ -186,3 +186,20 @@ test('Concept detalhado carrega, sofre colisão e pode ser recarregado',async({p
   await expect(page.locator('#game')).toHaveAttribute('data-model','concept');
   expect(errors).toEqual([]);
 });
+
+test('o acelerador entra direto a 200 km/h e as primeiras lombadas não encerram o teste',async({page})=>{
+  test.setTimeout(150_000);
+  await page.goto('/');
+  await expect(page.locator('#loading')).toBeHidden({timeout:30_000});
+  await page.locator('[data-vehicle="sedan"]').click();
+  await page.locator('[data-scenario="speedbumps"]').click();
+  await page.locator('#start').click();
+  const pedal=page.locator('#accelerate');
+  await pedal.dispatchEvent('pointerdown',{pointerId:149,pointerType:'touch'});
+  // HUD updates asynchronously but physics speed is applied on pointer press.
+  await expect.poll(async()=>Number(await page.locator('#speed').textContent()),{timeout:20_000}).toBeGreaterThanOrEqual(190);
+  await expect.poll(async()=>Number((await page.locator('#bumps-count').textContent())?.split('/')[0]),{timeout:90_000}).toBeGreaterThanOrEqual(3);
+  await expect(page.locator('body')).toHaveAttribute('data-phase','running');
+  await expect(page.locator('#result-wrap')).toBeHidden();
+  await pedal.dispatchEvent('pointerup',{pointerId:149,pointerType:'touch'});
+});
