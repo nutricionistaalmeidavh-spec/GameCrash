@@ -31,9 +31,9 @@ test('inspection orbit and second side camera keep wreck centered',()=>{
   const follower=new CameraFollower(),p=new THREE.Vector3(38,6,420),v=new THREE.Vector3(0,0,0);
   follower.reset(p);
   const q=new THREE.Quaternion().setFromAxisAngle(new THREE.Vector3(0,0,1),Math.PI);
-  const normal=follower.update(p,q,v,.03,'crashed',0,0,0);
+  const normal=follower.update(p,q,v,.03,'crashed',0,0,0).position.clone();
   const rotated=follower.update(p,q,v,.03,'crashed',0,Math.PI/2,.3);
-  assert.ok(rotated.position.distanceTo(normal.position)>1);
+  assert.ok(rotated.position.distanceTo(normal)>1);
   assert.ok(rotated.target.distanceTo(p.clone().add(new THREE.Vector3(0,.45,0)))<1);
   const other=follower.update(p,q,v,.03,'crashed',1,0,0);
   assert.ok(other.position.distanceTo(p)>5);
