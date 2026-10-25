@@ -1,5 +1,5 @@
 import * as THREE from 'three';
-import RAPIER from '@dimforge/rapier3d-compat';
+import * as RAPIER from '@dimforge/rapier3d-compat';
 import type {ScenarioId} from './rules.ts';
 import {SCENARIOS,SPEEDBUMPS} from './rules.ts';
 import {bumpShape} from './bump.ts';
