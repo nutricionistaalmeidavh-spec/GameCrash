@@ -1,8 +1,8 @@
 import * as THREE from 'three';
 import RAPIER from '@dimforge/rapier3d-compat';
-import type {ScenarioId} from './rules';
-import {SCENARIOS,SPEEDBUMPS} from './rules';
-import {bumpShape} from './bump';
+import type {ScenarioId} from './rules.ts';
+import {SCENARIOS,SPEEDBUMPS} from './rules.ts';
+import {bumpShape} from './bump.ts';
 import {createSurfaceTextures,type GraphicsProfile} from './visuals';
 
 /** The road collider top is y=0.075. A flat entry and easing slope prevent
