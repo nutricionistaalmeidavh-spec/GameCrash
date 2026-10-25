@@ -5,10 +5,10 @@ import {VehicleDynamics,PHYSICS_DT,EMPTY_INPUT} from '../src/game/driving.ts';
 import {VEHICLES} from '../src/game/rules.ts';
 import {rotate} from '../src/game/structure.ts';
 before(async()=>{await RAPIER.init()});
-function fixture(){
+function fixture(spec=VEHICLES.sedan){
   const world=new RAPIER.World({x:0,y:-9.81,z:0});world.timestep=PHYSICS_DT;
   world.createCollider(RAPIER.ColliderDesc.cuboid(100,.1,1000).setTranslation(0,-.025,500));
-  const car=new VehicleDynamics(RAPIER,world,VEHICLES.sedan);
+  const car=new VehicleDynamics(RAPIER,world,spec);
   const run=(seconds,input=EMPTY_INPUT)=>{for(let i=0;i<seconds/PHYSICS_DT;i++){car.update(input,600);world.step()}};
   run(1);
   const launch=(speed,angle=0)=>{
@@ -74,5 +74,36 @@ test('600 km/h impacts stay finite and broken joints remain bounded',()=>{
     assert.ok(car.structure.fragments.length<=7);
     for(const node of car.structure.nodes){const p=car.structure.worldPosition(node);assert.ok(Number.isFinite(p.x+p.y+p.z));assert.ok(Math.hypot(p.x,p.y,p.z)<10000)}
     assert.ok(Math.abs(car.structure.totalMass-VEHICLES.sedan.mass)<.1,'detaching wheels must not create mass');
+  }finally{world.free()}
+});
+
+
+test('Concept impact releases authored panels and glass without creating vehicle mass',()=>{
+  const {world,car,launch,run}=fixture(VEHICLES.concept);
+  try{
+    world.createCollider(RAPIER.ColliderDesc.cuboid(6,3,.5).setTranslation(0,3,15));
+    launch(180);run(5);
+    const ids=car.structure.fragments.map(f=>f.id);
+    assert.ok(ids.includes('hood'));
+    assert.ok(ids.includes('front-bumper'));
+    assert.ok(ids.some(id=>id.startsWith('glass-')));
+    assert.ok(ids.length<=13);
+    assert.ok(Math.abs(car.structure.totalMass-VEHICLES.concept.mass)<.1);
+  }finally{world.free()}
+});
+
+
+test('local side intrusion can release an authored Concept door',()=>{
+  const {world,car}=fixture(VEHICLES.concept);
+  try{
+    // A side impact injects momentum into the left outer nodal masses.
+    let peak=0;
+    for(let i=0;i<3/PHYSICS_DT;i++){
+      if(i<36)for(const node of car.structure.nodes)if(!node.anchor&&node.rest.x<0&&Math.abs(node.rest.z)<1.6)node.body.applyImpulse({x:node.body.mass()*20,y:0,z:0},true);
+      car.structure.update(PHYSICS_DT);world.step();
+      peak=Math.max(peak,car.structure.damageAt({x:-1.05,y:0,z:.08}));
+    }
+    assert.ok(car.structure.fragments.some(f=>f.id==='door-left'),JSON.stringify({ids:car.structure.fragments.map(f=>f.id),peak,work:car.structure.plasticWorkJ,broken:car.structure.brokenBeams}));
+    assert.ok(Math.abs(car.structure.totalMass-VEHICLES.concept.mass)<.1);
   }finally{world.free()}
 });

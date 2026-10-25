@@ -34,7 +34,7 @@ export class VehicleDynamics {
     this.body=world.createRigidBody(api.RigidBodyDesc.dynamic()
       .setTranslation(0,this.layout.radius-this.layout.y+.12,0)
       .setLinearDamping(.015).setAngularDamping(.45).setCanSleep(false).setCcdEnabled(true));
-    this.collider=world.createCollider(api.ColliderDesc.cuboid(w*.45,h*.24,l*.16)
+    this.collider=world.createCollider(api.ColliderDesc.cuboid(w*(spec.id==='concept'?.32:.45),h*.24,l*.16)
       .setTranslation(0,-h*.14,0).setMass(spec.mass*.72).setFriction(.35).setRestitution(.05).setCollisionGroups(0x00020001)
       .setActiveEvents(api.ActiveEvents.COLLISION_EVENTS),this.body);
     this.structure=new VehicleStructure(api,world,this.body,this.collider,spec);

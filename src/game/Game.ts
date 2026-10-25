@@ -1,4 +1,4 @@
-import {RoomEnvironment} from 'three/addons/environments/RoomEnvironment.js';
+import {Sky} from 'three/addons/objects/Sky.js';
 import {loadConcept} from './concept';
 import {AdaptiveRenderQuality} from './quality';
 import * as THREE from 'three';
@@ -16,6 +16,7 @@ export interface Controls {left:boolean;right:boolean;brake:boolean;throttle:boo
 export class Game {
   private renderer:THREE.WebGLRenderer;
   private environment:THREE.WebGLRenderTarget;
+  private sun:THREE.DirectionalLight;
   private scene=new THREE.Scene();
   private camera=new THREE.PerspectiveCamera(55,1,.05,1500);
   private clock=new THREE.Clock();
@@ -63,23 +64,28 @@ export class Game {
     canvas.dataset.renderProfile=this.quality.mobile?'mobile':'desktop';
     this.renderer=new THREE.WebGLRenderer({canvas,antialias:true,alpha:false,powerPreference:'high-performance'});
     this.renderer.setPixelRatio(this.quality.configure(window.innerWidth,window.innerHeight,window.devicePixelRatio||1));
+    this.renderer.transmissionResolutionScale=.25;
     this.renderer.shadowMap.enabled=true;
     this.renderer.shadowMap.type=THREE.PCFSoftShadowMap;
     this.renderer.toneMapping=THREE.ACESFilmicToneMapping;
     this.renderer.toneMappingExposure=1.1;
-    const pmrem=new THREE.PMREMGenerator(this.renderer),room=new RoomEnvironment();
-    this.environment=pmrem.fromScene(room,.04);
+    const pmrem=new THREE.PMREMGenerator(this.renderer),sky=new Sky(),outdoors=new THREE.Scene();
+    sky.scale.setScalar(1000);
+    sky.material.uniforms.turbidity.value=4;sky.material.uniforms.rayleigh.value=2;
+    sky.material.uniforms.mieCoefficient.value=.004;sky.material.uniforms.mieDirectionalG.value=.8;
+    sky.material.uniforms.sunPosition.value.set(-35,65,35);outdoors.add(sky);
+    this.environment=pmrem.fromScene(outdoors,.035);
     this.scene.environment=this.environment.texture;
     this.scene.environmentIntensity=.65;
-    room.dispose();pmrem.dispose();
-    this.scene.background=new THREE.Color(0x9caeb2);
-    this.scene.fog=new THREE.FogExp2(0x9caeb2,.0038);
+    sky.geometry.dispose();sky.material.dispose();pmrem.dispose();
+    this.scene.background=new THREE.Color(0xadc2cc);
+    this.scene.fog=new THREE.FogExp2(0xadc2cc,.0038);
     const hemi=new THREE.HemisphereLight(0xe7efff,0x53624b,2.05);this.scene.add(hemi);
-    const sun=new THREE.DirectionalLight(0xfff3d9,2.1);
+    const sun=this.sun=new THREE.DirectionalLight(0xfff3d9,2.1);
     sun.position.set(-60,100,80);sun.castShadow=true;
     sun.shadow.mapSize.set(this.quality.shadowMapSize,this.quality.shadowMapSize);
     sun.shadow.camera.left=-38;sun.shadow.camera.right=38;sun.shadow.camera.top=38;sun.shadow.camera.bottom=-38;
-    sun.shadow.normalBias=.038;this.scene.add(sun);
+    sun.shadow.normalBias=.025;sun.shadow.bias=-.00015;this.scene.add(sun,sun.target);
     this.camera.position.set(6,5,-13);
     window.addEventListener('resize',this.resize);
     canvas.addEventListener('pointerdown',this.orbitStart);
@@ -246,6 +252,7 @@ export class Game {
     if(safety>=10)this.accumulator=0;
     const t=this.body?.translation();
     if(t&&this.visual){
+      this.sun.position.set(t.x-35,t.y+65,t.z+35);this.sun.target.position.set(t.x,t.y,t.z);
       const q=this.body.rotation();
       this.visual.root.position.set(t.x,t.y,t.z);
       this.visual.root.quaternion.set(q.x,q.y,q.z,q.w);
@@ -280,6 +287,8 @@ export class Game {
     if(this.camera.aspect!==aspect){this.camera.aspect=aspect;this.camera.updateProjectionMatrix()}
     this.renderer.setViewport(0,height-available,width,available);
     this.renderer.render(this.scene,this.camera);
+    this.canvas.dataset.drawCalls=String(this.renderer.info.render.calls);
+    this.canvas.dataset.triangles=String(this.renderer.info.render.triangles);
   };
   dispose(){++this.resourceRevision;if(this.scenery){this.scene.remove(this.scenery);disposeBrazilObject(this.scenery)}cancelAnimationFrame(this.raf);window.removeEventListener('resize',this.resize);this.canvas.removeEventListener('pointerdown',this.orbitStart);this.canvas.removeEventListener('pointermove',this.orbitMove);this.canvas.removeEventListener('pointerup',this.orbitEnd);this.canvas.removeEventListener('pointercancel',this.orbitEnd);this.track?.dispose();this.queue?.free();this.world?.free();this.environment.dispose();if(this.visual)for(const root of [this.visual.root,this.visual.debrisRoot])disposeBrazilObject(root);this.renderer.dispose()}
 }

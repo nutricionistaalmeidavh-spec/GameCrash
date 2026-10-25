@@ -1,0 +1,34 @@
+{
+  "renderer": "Chromium / SwiftShader CPU, not an actual iPhone GPU",
+  "assetTriangles": 101198,
+  "results": [
+    {
+      "name": "desktop",
+      "viewport": {
+        "width": 1280,
+        "height": 720
+      },
+      "loadMs": 1023,
+      "frames": 16,
+      "averageFps": 1.5459534668006496,
+      "p95FrameMs": 1016.6000000000004,
+      "drawCalls": 284,
+      "renderedTriangles": 266336,
+      "errors": []
+    },
+    {
+      "name": "mobile",
+      "viewport": {
+        "width": 390,
+        "height": 664
+      },
+      "loadMs": 953,
+      "frames": 20,
+      "averageFps": 1.932441833500812,
+      "p95FrameMs": 1200,
+      "drawCalls": 280,
+      "renderedTriangles": 266296,
+      "errors": []
+    }
+  ]
+}

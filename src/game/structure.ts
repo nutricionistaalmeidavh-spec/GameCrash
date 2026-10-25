@@ -1,3 +1,4 @@
+import concept from './concept.json' with {type:'json'};
 import type * as RAPIER from '@dimforge/rapier3d-compat';
 import {clamp,type VehicleSpec} from './rules.ts';
 
@@ -62,7 +63,7 @@ export class VehicleStructure {
       const beam:Beam={a,b,initial,rest:initial,appliedRest:initial,stiffness,yieldForce:spec.mass*6*spec.resistance,joint,broken:false,clock:0,surfaceLength:initial};
       if(surface){
         beam.surface=world.createCollider(api.ColliderDesc.capsule(initial/2,.065).setDensity(0).setCollisionGroups(0x00020001)
-          .setActiveEvents(api.ActiveEvents.COLLISION_EVENTS),a.body);
+          .setActiveEvents(api.ActiveEvents.COLLISION_EVENTS),spec.id==='concept'&&a.anchor?b.body:a.body);
         this.colliderHandles.add(beam.surface.handle);this.updateSurface(beam);
       }
       this.beams.push(beam);
@@ -74,7 +75,7 @@ export class VehicleStructure {
   }
   private updateSurface(beam:Beam){
     if(!beam.surface)return;
-    const a=this.worldPosition(beam.a),b=this.worldPosition(beam.b),parent=beam.a.body,p=parent.translation(),q=parent.rotation(),inverse={x:-q.x,y:-q.y,z:-q.z,w:q.w};
+    const a=this.worldPosition(beam.a),b=this.worldPosition(beam.b),parent=this.spec.id==='concept'&&beam.a.anchor?beam.b.body:beam.a.body,p=parent.translation(),q=parent.rotation(),inverse={x:-q.x,y:-q.y,z:-q.z,w:q.w};
     const direction=rotate(sub(b,a),inverse),distance=length(direction);
     if(distance<.01)return;
     if(Math.abs(distance-beam.surfaceLength)>.01){beam.surface.setShape(this.api.ColliderDesc.capsule(distance/2,.065).shape);beam.surfaceLength=distance}
@@ -131,12 +132,13 @@ export class VehicleStructure {
     // Detachment belongs to the fixed physics step, never to the render frequency.
     if(this.brokenBeams){
       const [w,h,l]=this.spec.size;
-      for(const part of [
+      const parts=this.spec.id==='concept'?concept.parts.map(p=>({id:p.id,point:{x:p.center[0],y:p.center[1]-(h*.53+.08),z:p.center[2]},half:{x:p.half[0],y:p.half[1],z:p.half[2]},mass:p.mass,threshold:p.threshold})):[
         {id:'hood',point:{x:0,y:h*.04,z:l*.31},half:{x:w*.45,y:h*.05,z:l*.125},mass:12},
         {id:'front-bumper',point:{x:0,y:-h*.24,z:l*.49},half:{x:w*.42,y:h*.10,z:.08},mass:6},
         {id:'rear-bumper',point:{x:0,y:-h*.24,z:-l*.49},half:{x:w*.42,y:h*.10,z:.08},mass:6}
-      ]){
-        if(this.fragments.some(f=>f.id===part.id)||this.damageAt(part.point)<.32)continue;
+      ].map(p=>({...p,threshold:.32}));
+      for(const part of parts){
+        if(this.fragments.some(f=>f.id===part.id)||this.damageAt(part.point)<part.threshold)continue;
         const offset=this.displacementAt(part.point),rotated=rotate({x:part.point.x+offset.x,y:part.point.y+offset.y,z:part.point.z+offset.z},this.cabin.rotation()),origin=this.cabin.translation();
         this.releaseFragment(part.id,{x:origin.x+rotated.x,y:origin.y+rotated.y,z:origin.z+rotated.z},part.half,part.mass);
       }
