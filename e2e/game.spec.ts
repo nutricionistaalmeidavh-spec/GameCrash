@@ -5,6 +5,7 @@ test('carrega a cena WebGL no desktop e no WebKit iPhone',async({page},testInfo)
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');
   await expect(page.locator('#loading')).toBeHidden({timeout:30_000});
+  await page.locator('[data-vehicle="sedan"]').click();
   await expect(page.locator('#fatal')).toBeHidden();
   await expect(page.locator('#vehicles button')).toHaveCount(14);
   await expect(page.locator('#scenarios button')).toHaveCount(4);
@@ -24,6 +25,7 @@ test('dirige e mede deslocamento real na pista',async({page},testInfo)=>{
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');
   await expect(page.locator('#loading')).toBeHidden({timeout:30_000});
+  await page.locator('[data-vehicle="sedan"]').click();
   await page.locator('#camera').click();
   await page.locator('#start').click();
   await expect(page.locator('body')).toHaveAttribute('data-phase','running');
@@ -46,6 +48,7 @@ test('mostra o resultado do impacto e permite reiniciar',async({page},testInfo)=
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');
   await expect(page.locator('#loading')).toBeHidden({timeout:30_000});
+  await page.locator('[data-vehicle="sedan"]').click();
   await page.locator('#start').click();
   await expect(page.locator('#speed')).toHaveText('000');
   await page.locator('#accelerate').dispatchEvent('pointerdown',{pointerId:8,pointerType:'touch'});
@@ -75,6 +78,7 @@ test('mostra o resultado do impacto e permite reiniciar',async({page},testInfo)=
 test('acelerador manual freia e solta corretamente no WebKit iPhone',async({page})=>{
   await page.goto('/');
   await expect(page.locator('#loading')).toBeHidden({timeout:30_000});
+  await page.locator('[data-vehicle="sedan"]').click();
   await page.locator('#start').click();
   await expect(page.locator('#speed')).toHaveText('000');
   const pedal=page.getByRole('button',{name:'Acelerar'});
@@ -89,6 +93,7 @@ test('acelerador manual freia e solta corretamente no WebKit iPhone',async({page
 test('turbo a 600 km/h e seleção do desafio de 120 lombadas',async({page})=>{
   await page.goto('/');
   await expect(page.locator('#loading')).toBeHidden({timeout:30_000});
+  await page.locator('[data-vehicle="sedan"]').click();
   await expect(page.locator('#scenarios button')).toHaveCount(4);
   await expect(page.getByRole('slider',{name:'Velocidade máxima'})).toHaveValue('600');
   await page.getByRole('button',{name:/120 LOMBADAS/}).click();
@@ -103,7 +108,7 @@ test('turbo a 600 km/h e seleção do desafio de 120 lombadas',async({page})=>{
 
 test('garagem recolhe, pedais ficam acessíveis e reiniciar funciona durante a corrida',async({page},testInfo)=>{
   await page.goto('/');
-  await expect(page.locator('#loading')).toBeHidden();
+  await expect(page.locator('#loading')).toBeHidden();await page.locator('[data-vehicle="sedan"]').click();
   await page.locator('#start').click();
   await expect(page.locator('.bottom-panel')).toBeHidden();
   const pedal=page.locator('#accelerate');
@@ -127,7 +132,7 @@ test('garagem recolhe, pedais ficam acessíveis e reiniciar funciona durante a c
 });
 
 test('multitoque e cancelamento não deixam o acelerador preso',async({page})=>{
-  await page.goto('/');await expect(page.locator('#loading')).toBeHidden();await page.locator('#start').click();
+  await page.goto('/');await expect(page.locator('#loading')).toBeHidden();await page.locator('[data-vehicle="sedan"]').click();await page.locator('#start').click();
   await page.locator('#accelerate').dispatchEvent('pointerdown',{pointerId:91,pointerType:'touch'});
   await page.locator('#right').dispatchEvent('pointerdown',{pointerId:92,pointerType:'touch'});
   await expect(page.locator('#accelerate')).toHaveAttribute('aria-pressed','true');
@@ -141,7 +146,7 @@ test('multitoque e cancelamento não deixam o acelerador preso',async({page})=>{
 
 test('controles cabem no celular em retrato e paisagem',async({page},testInfo)=>{
   await page.setViewportSize({width:390,height:844});
-  await page.goto('/');await expect(page.locator('#loading')).toBeHidden();
+  await page.goto('/');await expect(page.locator('#loading')).toBeHidden();await page.locator('[data-vehicle="sedan"]').click();
   await page.locator('[data-vehicle="gol"]').click();
   await page.locator('#start').click();
   for(const viewport of [{width:390,height:844},{width:844,height:390}]){
@@ -158,6 +163,9 @@ test('controles cabem no celular em retrato e paisagem',async({page},testInfo)=>
 });
 
 test('Concept detalhado carrega, sofre colisão e pode ser recarregado',async({page},testInfo)=>{
+  test.setTimeout(180_000);
+  // Software WebGL in CI needs a smaller render target for the full PBR model.
+  if(testInfo.project.name==='chromium-desktop')await page.setViewportSize({width:640,height:480});
   const errors:string[]=[];
   page.on('pageerror',error=>errors.push(error.message));
   await page.goto('/');
@@ -168,7 +176,7 @@ test('Concept detalhado carrega, sofre colisão e pode ser recarregado',async({p
   await page.locator('#start').click();
   await expect(page.locator('#game')).toHaveAttribute('data-model','concept');
   await page.locator('#accelerate').dispatchEvent('pointerdown',{pointerId:48,pointerType:'touch'});
-  await expect(page.locator('#result-wrap')).toBeVisible({timeout:60_000});
+  await expect(page.locator('#result-wrap')).toBeVisible({timeout:120_000});
   await page.locator('#accelerate').dispatchEvent('pointerup',{pointerId:48,pointerType:'touch'});
   await expect.poll(async()=>Number((await page.locator('#deformation-energy').textContent())?.replace(/[^\d]/g,''))).toBeGreaterThan(0);
   await page.locator('#inspect').click();

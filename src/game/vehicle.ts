@@ -138,7 +138,7 @@ export function createVehicle(spec:VehicleSpec):VehicleVisual{
       const deformed=brokenBeams>0||structure.damage>5;
       const point=new THREE.Vector3();
       for(const binding of bindings){
-        if(!binding.active||!visible(binding.mesh))continue;
+        if(!binding.active||!visible(binding.mesh)||(spec.id==='concept'&&!deformed))continue;
         const {mesh,rest,indices,weights,toLocal}=binding,pos=mesh.geometry.getAttribute('position') as THREE.BufferAttribute;
         const unsupported=new Uint8Array(pos.count);
         for(let i=0;i<pos.count;i++){
