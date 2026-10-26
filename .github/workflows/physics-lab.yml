@@ -1,0 +1,74 @@
+name: Experimental physics lab — WASM, C++ and WebKit
+on:
+  push:
+    branches: ['feat/physics-jolt-ror-benchmarks']
+    paths:
+      - 'experiments/**'
+      - '.github/workflows/physics-lab.yml'
+  pull_request:
+    paths:
+      - 'experiments/**'
+      - '.github/workflows/physics-lab.yml'
+permissions:
+  contents: read
+jobs:
+  physics-lab:
+    name: Node tests, WASM bundle and real browsers
+    runs-on: ubuntu-latest
+    defaults:
+      run:
+        working-directory: experiments/physics-lab
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Install root Playwright runner
+        run: npm ci --no-audit --no-fund
+        working-directory: .
+      - name: Install isolated pinned engines (no lockfile mutation)
+        run: npm install --no-package-lock --no-audit --no-fund
+      - name: RED-GREEN unit tests
+        run: npm test
+      - name: Bundle fully self-hosted WASM
+        run: npm run build
+      - name: Install Chromium and WebKit
+        run: npx playwright install --with-deps chromium webkit
+        working-directory: .
+      - name: Browser QA (Jolt soft-body)
+        run: npx playwright test --config experiments/physics-lab/playwright.config.mjs
+        working-directory: .
+      - uses: actions/upload-artifact@v4
+        if: always()
+        with:
+          name: physics-lab-wasm-and-qa
+          path: |
+            experiments/physics-lab/dist/
+            experiments/physics-lab/playwright-report/
+            experiments/physics-lab/test-results/
+          retention-days: 14
+  ror-core:
+    name: Node-and-beam native + Emscripten build
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - name: Compile and test independent native C++ physics core
+        run: |
+          g++ -std=c++17 -O2 -Wall -Wextra -Werror -DGC_PHYSICS_TEST experiments/ror-core/physics_core.cpp -o /tmp/physics-core-test
+          /tmp/physics-core-test
+      - uses: mymindstorm/setup-emsdk@v14
+        with:
+          version: '3.1.68'
+      - name: Compile the same C++ core to standalone WebAssembly
+        run: |
+          mkdir -p experiments/ror-core/dist
+          em++ -std=c++17 -O2 experiments/ror-core/physics_core.cpp \
+            -sMODULARIZE=1 -sEXPORT_ES6=1 -sENVIRONMENT=web,worker \
+            -sEXPORTED_FUNCTIONS='["_lab_reset","_lab_step","_lab_node_count","_lab_beam_count","_lab_broken_count","_lab_deformation_fraction","_lab_positions"]' \
+            -o experiments/ror-core/dist/node-beam.mjs
+          test -s experiments/ror-core/dist/node-beam.wasm
+      - uses: actions/upload-artifact@v4
+        with:
+          name: isolated-node-beam-wasm
+          path: experiments/ror-core/dist/
+          retention-days: 14
