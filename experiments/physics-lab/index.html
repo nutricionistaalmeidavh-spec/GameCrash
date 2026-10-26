@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="pt-BR"><head><meta charset="UTF-8"><meta name="viewport" content="width=device-width,initial-scale=1">
+<title>GameCrash — Laboratório de Física</title><style>
+:root{font-family:system-ui,-apple-system,sans-serif;color:#e6eafb;background:#0c1322}
+*{box-sizing:border-box}body{margin:0}.top{padding:18px 20px;background:#141e32;border-bottom:1px solid #334259}
+h1{font-size:1.4rem;margin:0 0 8px}.notice{font-size:.85rem;color:#b2c1d6;max-width:900px}
+main{max-width:1200px;margin:auto;padding:18px;display:grid;gap:16px}
+.controls{display:flex;flex-wrap:wrap;gap:12px;align-items:end}label{display:grid;gap:6px;font-size:.9rem}
+select,button{background:#1c2a43;color:white;border:1px solid #526382;border-radius:8px;padding:11px 13px;font:inherit}
+button{cursor:pointer;background:#355ed3}button:disabled{opacity:.55}
+#canvas{height:min(55vh,500px);width:100%;border-radius:12px;background:#172338}
+.stats{display:grid;grid-template-columns:repeat(auto-fit,minmax(155px,1fr));gap:10px}
+.stat{background:#152137;border:1px solid #314056;border-radius:9px;padding:13px}
+.stat strong{display:block;font-size:1.4rem}.stat small{color:#b4c5df}
+#status{min-height:1.3rem;color:#9fdbff}pre{white-space:pre-wrap;overflow-wrap:anywhere;background:#141e32;padding:14px;border-radius:10px}
+a{color:#a1c5ff}
+</style></head>
+<body><header class="top"><h1>GameCrash · Laboratório de física</h1>
+<div class="notice">Comparação experimental, não certificação de colisões. Rapier usa caixa rígida de referência e Jolt uma estrutura soft-body experimental. Mesma massa, dimensões, velocidade e obstáculos; modelos físicos diferentes.</div></header>
+<main>
+<div class="controls">
+<label>Motor <select id="engine"><option value="rapier">Rapier WASM — rígido</option><option value="jolt">Jolt WASM — soft-body</option></select></label>
+<label>Cenário <select id="scenario"><option value="wall">Parede</option><option value="ramp">Rampa</option><option value="bumps">Lombadas</option></select></label>
+<button id="run" type="button">Executar 4 segundos simulados</button>
+<button id="compare" type="button">Comparar os dois motores</button>
+<button id="export" type="button" disabled>Exportar JSON</button>
+</div>
+<div id="status" role="status">Inicializando motores WASM...</div>
+<canvas id="canvas" aria-label="Visualização da simulação"></canvas>
+<div class="stats">
+<div class="stat"><small>Motor</small><strong id="engine-name">—</strong></div>
+<div class="stat"><small>Tempo dos 480 passos</small><strong id="duration">—</strong></div>
+<div class="stat"><small>p95 por passo</small><strong id="p95">—</strong></div>
+<div class="stat"><small>Deformação proxy</small><strong id="deformation">—</strong></div>
+<div class="stat"><small>Distância percorrida</small><strong id="distance">—</strong></div>
+</div>
+<pre id="results">Sem medições. Os resultados são do dispositivo que executa o teste.</pre>
+<p class="notice">Para comparação válida de desempenho, execute várias rodadas no mesmo navegador e dispositivo. Renderização, memória, malha, contato e modelagem ainda precisam de comparação isolada com a física completa do GameCrash.</p>
+</main><script type="module" src="/src/main.mjs"></script></body></html>
