@@ -6,8 +6,17 @@
     <meta name="theme-color" content="#080c13" />
     <meta name="description" content="GameCrash: simulador arcade 3D de colisões, gratuito e sem cadastro." />
     <link rel="icon" href="./favicon.svg" type="image/svg+xml" />
+    <script>(function(){
+      // GitHub Pages publishes the QA-approved Vite bundle under /play/.
+      // This must run before the app loads, without requiring an external module.
+      const url = new URL(location.href);
+      if (url.hostname !== 'nutricionistaalmeidavh-spec.github.io') return;
+      if (url.pathname !== '/GameCrash/' && url.pathname !== '/GameCrash/index.html') return;
+      url.pathname = '/GameCrash/play/';
+      location.replace(url.href);
+    })();</script>
     <title>GameCrash · Crash Test Simulator</title>
-    <script type="module" crossorigin src="./assets/index-CqqEzl9C.js"></script>
+    <script type="module" crossorigin src="./assets/index-DQZlA1m4.js"></script>
     <link rel="stylesheet" crossorigin href="./assets/index-_Q4kLnvb.css">
   </head>
   <body>
