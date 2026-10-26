@@ -1,0 +1,20 @@
+import {test,expect} from '@playwright/test';
+test('loads actual Jolt WASM and completes soft-body wall benchmark',async({page},testInfo)=>{
+  const exceptions=[];
+  page.on('pageerror',e=>exceptions.push(e.message));
+  await page.goto('/');
+  await expect(page.getByRole('status')).toContainText('Pronto para medir',{timeout:60000});
+  await page.getByLabel('Motor').selectOption('jolt');
+  await page.getByLabel('Cenário').selectOption('wall');
+  await page.getByRole('button',{name:/Executar 4 segundos/}).click();
+  await expect(page.getByRole('status')).toContainText('Benchmark concluído',{timeout:125000});
+  const reports=JSON.parse(await page.locator('#results').innerText());
+  expect(reports).toHaveLength(1);
+  expect(reports[0].engine).toBe('Jolt');
+  expect(reports[0].metrics.steps).toBe(480);
+  expect(reports[0].observations.nodes).toBe(36);
+  expect(reports[0].observations.maxCompressionPercent).toBeGreaterThanOrEqual(0);
+  expect(Number.isFinite(reports[0].metrics.avgStepMs)).toBe(true);
+  expect(exceptions).toEqual([]);
+  await testInfo.attach('jolt-soft-body-wall',{body:await page.screenshot(),contentType:'image/png'});
+});
