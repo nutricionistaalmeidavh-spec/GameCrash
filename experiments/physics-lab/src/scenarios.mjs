@@ -17,7 +17,7 @@ export function summarizeFrames(samples, fixedStepCount=SAMPLE_STEPS) {
     totalMs:round(total),
     avgStepMs:round(total/samples.length),
     p95StepMs:round(sorted[Math.ceil(sorted.length*.95)-1]),
-    simulatedSeconds:round(samples.length*PHYSICS_STEP),
+    simulatedSeconds:samples.length*PHYSICS_STEP,
     estimatedMaxSimulationHz:round(total?1000/(total/samples.length):0)
   };
 }
