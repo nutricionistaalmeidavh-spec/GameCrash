@@ -40,15 +40,17 @@ O build fica em `dist/` e pode ser hospedado em qualquer servidor estático.
 
 **Importante:** a porcentagem de sobrevivência é um elemento fictício de jogo, não uma avaliação de acidentes reais. A estrutura usa um modelo elastoplástico simplificado, com cabine rígida central e uma malha deformável acoplada; seus parâmetros de jogo não são uma calibração de veículos reais nem uma análise estrutural por elementos finitos.
 
-## Publicação oficial no GitHub Pages
+## Publicação oficial exclusivamente no GitHub Pages
 
-O GitHub Actions faz **testes + build Vite + QA Chromium/WebKit + publicação no Pages**. A publicação usa exclusivamente o artefato compilado `dist/`.
+**Jogar:** https://nutricionistaalmeidavh-spec.github.io/GameCrash/
 
-No primeiro deploy o workflow `ci.yml` configura o Pages para usar a fonte **GitHub Actions**, desativando o antigo processo Jekyll que publicava os arquivos-fonte (`src/main.ts`) incorretamente. Também faz smoke test do site publicado, conferindo os links JavaScript/CSS.
+**Link direto para o executável web compilado:** https://nutricionistaalmeidavh-spec.github.io/GameCrash/play/
 
-O jogo fica em https://nutricionistaalmeidavh-spec.github.io/GameCrash/ .
+Há **um único workflow de publicação**, `.github/workflows/ci.yml`, que executa os testes unitários, gera o build do Vite, roda QA no Chromium e WebKit, e **somente depois** copia o build aprovado para `play/` na branch `main`. A origem atual do GitHub Pages é `main`/`(root)`; o `index.html` do repositório redireciona diretamente para `/GameCrash/play/`, sem depender de módulos externos. `.nojekyll` desativa Jekyll para recursos compilados.
 
-Se a conta não permitir a configuração automática, em **Settings → Pages → Build and deployment → Source** selecione **GitHub Actions** uma única vez. O workflow falhará explicitamente nesse caso, sem afirmar sucesso indevido.
+O job publica apenas por GitHub Pages, gratuitamente. Não há integrações de hospedagem de terceiros, nem tentativa de alterar a origem do Pages via API sem as permissões adequadas. O smoke test da CI valida a URL raiz, o caminho `/play/` e os recursos JavaScript/CSS publicados.
+
+Se for necessário verificar a configuração no GitHub, use **Settings → Pages → Build and deployment → Source: Deploy from a branch → main → /(root)**. Não configure deploys alternativos para este projeto.
 
 Licença MIT.
 

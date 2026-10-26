@@ -43,36 +43,45 @@ jobs:
             test-results/
           retention-days: 14
 
-  deploy-pages:
-    name: Publish GitHub Pages after QA
+  publish-pages:
+    name: Publish compiled GameCrash to GitHub Pages
     needs: [unit-and-build, browser-e2e]
     if: github.event_name == 'push' && github.ref == 'refs/heads/main'
     runs-on: ubuntu-latest
     permissions:
-      contents: read
-      pages: write
-      id-token: write
-    environment:
-      name: github-pages
-      url: ${{ steps.deployment.outputs.page_url }}
+      contents: write
+    concurrency:
+      group: gamecrash-pages-publish
+      cancel-in-progress: false
     steps:
       - uses: actions/checkout@v4
+        with:
+          persist-credentials: true
       - uses: actions/download-artifact@v4
         with:
           name: gamecrash-dist
           path: dist
-      - name: Attempt to switch Pages source to Actions (requires admin permission)
-        continue-on-error: true # Legacy branch source may require a one-time manual Pages setting
+      - name: Publish QA-approved compiled build via GitHub Pages branch source
+        shell: bash
+        run: |
+          set -euo pipefail
+          test -f dist/index.html
+          test -n "$(find dist/assets -maxdepth 1 -name '*.js' -print -quit)"
+          test -n "$(find dist/assets -maxdepth 1 -name '*.css' -print -quit)"
+          rm -rf play
+          mkdir -p play
+          cp -a dist/. play/
+          touch .nojekyll
+          git add -f -A play/ .nojekyll
+          if ! git diff --cached --quiet; then
+            git -c user.name='github-actions[bot]' -c user.email='41898282+github-actions[bot]@users.noreply.github.com' commit -m 'build: update playable GitHub Pages artifact'
+            git push origin HEAD:main
+          else
+            echo 'GitHub Pages build already up to date.'
+          fi
+      - name: Verify public GitHub Pages game and required JS/CSS
         env:
-          GITHUB_TOKEN: ${{ github.token }}
-        run: node scripts/pages-source.mjs
-      - uses: actions/configure-pages@v5
-      - uses: actions/upload-pages-artifact@v3
-        with:
-          path: dist
-      - id: deployment
-        uses: actions/deploy-pages@v4
-      - name: Smoke test live Pages HTML and compiled JS/CSS
-        env:
-          PAGE_URL: ${{ steps.deployment.outputs.page_url }}
+          PAGE_URL: https://nutricionistaalmeidavh-spec.github.io/GameCrash/play/
         run: node scripts/check-pages.mjs
+      - name: Verify root GameCrash URL redirects to game
+        run: node scripts/check-pages-root.mjs
